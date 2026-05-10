@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────
+   Design tokens
+   修改主色 / 字体 / 字号阶梯请改这里
+   ────────────────────────────────────────────────────────── */
+@theme {
+  --color-paper: #f1ede6; /* 米白底 */
+  --color-ink: #0a0a0a; /* 主黑 */
+  --color-ink-soft: #161616; /* 暗灰(skill 默认背景悬停) */
+  --color-muted: #8a8a8a; /* 副文字 */
+  --color-brand: #e63329; /* 品牌红 ← 改这一行就能换主色 */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* 让锚点滚动时把 fixed 的 header 高度让出来 */
+  scroll-padding-top: 4rem;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Hero 入场动画
+   - 触发方式:Hero 的子元素根据 introDone 在 className 上切换
+                start === false  → "opacity-0"           (静止隐藏)
+                start === true   → "animate-hero-title"  (触发动画)
+   - keyframes:严格 0% / 100% 两端,无中间停顿
+   - 缓动曲线 :cubic-bezier(0.22, 1, 0.36, 1) 强烈前置 ease-out
+                t=10% 即 ~50% opacity,t=20% 即 ~70%,
+                视觉上 Intro 一消失文字立刻跃出,无"慢半拍"
+   - 总时长   :2s,无 animation-delay
+   ────────────────────────────────────────────────────────── */
+@keyframes hero-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 显式 opacity:0 兜底:理论上 keyframe 0% 已是 opacity 0,这里再保一道,
+   避免 className 切换瞬间被默认 opacity:1 闪一帧 */
+.animate-hero-title,
+.animate-hero-desc {
+  opacity: 0;
+}
+
+.animate-hero-title {
+  animation: hero-fade-up 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-hero-desc {
+  animation: hero-slide-in-left 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-title,
+  .animate-hero-desc {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Intro Overlay 进场动画
+   - 改总时长       : 下面 .intro-overlay 的 --intro-duration
+                      (JS 端 IntroOverlay.tsx 里的 NORMAL_MS 也要同步)
+   - 改字距扩散幅度 : .intro-title 的 --intro-spread-max
+                      (移动端在媒体查询里覆盖)
+   - 改颜色         : 文字色继承 --color-brand,改主色见文件顶部
+
+   设计要点:
+   .intro-title 用两条独立动画:
+     · intro-title-spread —— 只动 letter-spacing,单段连续,
+                             cubic-bezier(0.22, 1, 0.36, 1) 全程减速
+     · intro-title-fade   —— 只动 opacity / blur,与扩散互不干扰
+   这样字距曲线永远是一条平滑减速线,不会被 fade 锚点切片打断。
+   ────────────────────────────────────────────────────────── */
+.intro-overlay {
+  --intro-duration: 2.8s;
+  animation: intro-overlay-fade var(--intro-duration) ease forwards;
+}
+
+.intro-title {
+  --intro-spread-max: 0.75em;
+
+  font-size: clamp(56px, 8vw, 140px);
+  font-weight: 800;
+  color: var(--color-brand);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-shadow: 0 0 24px rgba(230, 51, 41, 0.25);
+  animation:
+    intro-title-spread var(--intro-duration, 2.8s)
+      cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    intro-title-fade var(--intro-duration, 2.8s) ease forwards;
+}
+
+.intro-sub {
+  margin-top: 28px;
+  font-size: clamp(10px, 1vw, 16px);
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-brand) 55%, transparent);
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: intro-sub-anim var(--intro-duration, 2.8s) ease forwards;
+}
+
+/* 移动端字号缩小 + 字距扩散减弱(避免横向溢出) */
+@media (max-width: 640px) {
+  .intro-title {
+    --intro-spread-max: 0.4em;
+    text-shadow: 0 0 12px rgba(230, 51, 41, 0.2);
+  }
+  .intro-sub {
+    margin-top: 20px;
+    letter-spacing: 0.3em;
+  }
+}
+
+@keyframes intro-overlay-fade {
+  /* 0 - 2.8s(74%)保持全黑;2.8 - 3.8s 整体淡出 */
+  0%,
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* letter-spacing 单段连续动画 —— 永远只走一条减速曲线,不会停顿 */
+@keyframes intro-title-spread {
+  0% {
+    letter-spacing: 0.08em;
+  }
+  100% {
+    letter-spacing: var(--intro-spread-max);
+  }
+}
+
+/* opacity / blur 单独走一条曲线,有 hold 段不影响字距 */
+@keyframes intro-title-fade {
+  /* 时间锚点(总 3.8s 的百分比):
+     0%   = 0.0s  纯黑,文字隐藏
+     5%   = 0.2s  开始淡入
+     24%  = 0.9s  完全可见
+     74%  = 2.8s  开始淡出
+     100% = 3.8s  完全消失                                  */
+  0% {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  5% {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  24% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  74% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes intro-sub-anim {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0.75;
+  }
+  74% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay {
+    animation: intro-overlay-fade 0.4s ease-out forwards;
+  }
+  .intro-title,
+  .intro-sub {
+    animation: none;
+    opacity: 0;
+    filter: none;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   AudioController 浮动按钮的延迟淡入
+   - 进入网站时立即挂载、尝试 autoplay,但按钮先隐藏避免遮挡 Intro
+   - delay 与 Intro 总时长 (--intro-duration: 2.8s) 对齐,Intro 一消失立即可见
+   - keyframe 中带 pointer-events 切换:动画结束后才允许点击
+   ────────────────────────────────────────────────────────── */
+.audio-btn-reveal {
+  opacity: 0;
+  pointer-events: none;
+  animation: audio-btn-reveal 0.5s ease-out 2.8s forwards;
+}
+
+@keyframes audio-btn-reveal {
+  to {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audio-btn-reveal {
+    animation: audio-btn-reveal 0.3s ease-out 0.5s forwards;
+  }
+}
