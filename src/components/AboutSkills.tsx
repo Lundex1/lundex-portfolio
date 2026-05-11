@@ -1,3 +1,8 @@
+"use client";
+
+import { useLang } from "./LangProvider";
+import Reveal from "./Reveal";
+
 // ─── Skill 图标 ──────────────────────────────────────────
 // 全部走 currentColor + 1.5 stroke,默认随父级文字色(白)。
 // 抽象几何符号,不使用任何彩色官方 Logo;hover / active 时
@@ -92,6 +97,7 @@ type Skill = {
   Icon: () => React.JSX.Element;
 };
 
+// 软件名是品牌名(各语言保持英文),不进字典
 const skills: Skill[] = [
   { name: "Photoshop", Icon: PhotoshopIcon },
   { name: "Blender", Icon: BlenderIcon },
@@ -101,82 +107,116 @@ const skills: Skill[] = [
   { name: "DaVinci Resolve", Icon: DaVinciIcon },
 ];
 
-// 高亮哪一项(用红色)。原本是 "Environment Design",新列表里没有此项,
-// 暂选 "Unreal Engine 5" 作为高亮以保留概念图里的红色焦点效果。
 const ACTIVE_SKILL = "Unreal Engine 5";
 
 export default function AboutSkills() {
+  const { t } = useLang();
+
   return (
-    <section id="about" className="px-6 py-24 lg:px-12 lg:py-32">
-      <div className="mx-auto grid max-w-[1360px] gap-16 lg:grid-cols-2">
-        {/* About 左 */}
-        <div>
+    <section
+      id="about"
+      className="relative overflow-hidden bg-[#e8e3da] px-6 py-24 lg:px-12 lg:py-32"
+    >
+      {/* 静态噪点层 —— 用和 Hero 同样的 radial-gradient 点阵语言,
+          但密度更密 / 颜色更淡(rgba 0.07 vs Hero 的 0.15),
+          视觉上把 Hero 的胶片颗粒延伸到 About,不让米白背景显得太"光板"。
+          aria-hidden + pointer-events-none,不影响阅读和交互。 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(0,0,0,0.07) 1px, transparent 1px)",
+          backgroundSize: "5px 5px",
+        }}
+      />
+
+      <div className="relative mx-auto grid max-w-[1360px] gap-16 lg:grid-cols-2">
+        {/* About 左 —— 整列 reveal,内部各小段不再单独错峰,避免视觉太碎 */}
+        <Reveal>
           <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.3em]">
             <span
               className="mr-3 inline-block h-px w-8 bg-brand align-middle"
               aria-hidden
             />
-            About
+            {t.about.eyebrow}
           </p>
 
-          <h2 className="mb-8 text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
-            Personal Introduction
+          <h2 className="mb-10 text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
+            {t.about.title}
           </h2>
 
-          {/*
-            头像 + 简介:横向排列(sm 及以上),移动端自动堆叠为上下。
-            正文 max-w 限制行宽,保证可读性;头像固定接近正方形不被拉伸。
-          */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+          {/* 头像 + 姓名:桌面端左右,移动端上下 */}
+          <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/works/06.png"
               alt="LUNDEX portrait"
-              className="h-32 w-32 flex-shrink-0 object-cover sm:h-36 sm:w-36"
+              className="h-[150px] w-[150px] flex-shrink-0 object-cover"
             />
-
-            <div className="max-w-md space-y-4 text-[15px] leading-relaxed text-ink/70">
-              <p className="font-bold text-ink">Name: LUNDEX</p>
-
-              <p>
-                I am an environment concept design student focused on game
-                spaces, atmosphere, and 3D-assisted visual development.
+            <div>
+              <p className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                LUNDEX
               </p>
-
-              <p>
-                I have studied drawing for around seven years and have been
-                working with 3D software for about three years. My workflow
-                combines sketching, Blender, 3DCoat, Photoshop, and texture
-                production to explore spaces, props, lighting, and visual
-                direction.
-              </p>
-
-              <p>
-                I was selected to participate in Capcom&rsquo;s portfolio
-                review program and have contributed to an outsourced project
-                for ByteDance. These experiences gave me a clearer
-                understanding of professional feedback, production standards,
-                and how visual design decisions connect with real project
-                needs.
-              </p>
-
-              <p>
-                My goal is to become an environment concept designer in the
-                game industry, creating spaces that support gameplay, mood,
-                and storytelling.
+              <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-ink/65">
+                {t.about.bio}
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Skills 右 */}
-        <div>
+          {/* Experience —— 带左边框的醒目条目 + 小标题 */}
+          <div className="mb-10">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-ink/45">
+              {t.about.experienceTitle}
+            </p>
+            <div className="space-y-3">
+              {t.about.experience.map((item) => (
+                <div
+                  key={item}
+                  // origin-left:从左侧锚定缩放,红条边线作为支点不动
+                  // hover:bg-brand:整条变成主题红(同 WorkCard NIO hover 语言)
+                  // 文字保持 text-ink(黑),在红底上仍清晰
+                  className="origin-left border-l-2 border-brand py-2 pl-4 pr-4 transition-all duration-200 ease-out hover:scale-[1.02] hover:bg-brand"
+                >
+                  <p className="text-sm font-semibold text-ink">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Focus —— 标签列表,比长字距一行更易读 */}
+          <div className="mb-10">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-ink/45">
+              {t.about.focusTitle}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {t.about.focus.map((tag) => (
+                <span
+                  key={tag}
+                  // 与 Design Focus 列表同款放大;hover 时边框 + 文字向品牌红靠拢,
+                  // 形成可点状的反馈(虽然实际不可点,纯视觉强调)
+                  className="inline-block origin-center border border-ink/25 px-4 py-2 text-[13px] font-medium text-ink/75 transition-all duration-200 ease-out hover:scale-[1.05] hover:border-brand hover:text-ink"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* 目标 */}
+          <p className="max-w-md text-[15px] leading-relaxed text-ink/70">
+            {t.about.goal}
+          </p>
+        </Reveal>
+
+        {/* Skills 右 —— 右列延后 120ms reveal,与左列形成自然错峰 */}
+        <Reveal delay={120}>
           <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.3em]">
             <span
               className="mr-3 inline-block h-px w-8 bg-brand align-middle"
               aria-hidden
             />
-            Skills
+            {t.skills.eyebrow}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
@@ -185,18 +225,12 @@ export default function AboutSkills() {
               return (
                 <span
                   key={name}
-                  className={`grid grid-cols-[32px_1fr] items-center gap-4 px-5 py-4 text-sm transition-colors ${
+                  className={`grid grid-cols-[32px_1fr] items-center gap-4 px-5 py-4 text-sm transition-all duration-300 hover:-translate-y-0.5 ${
                     active
                       ? "bg-brand text-white"
                       : "bg-ink text-white hover:bg-ink-soft"
                   }`}
                 >
-                  {/*
-                    Icon 槽:固定 32px 宽,图标在槽内居中。每个按钮里
-                    icon 槽宽度一致 → 文字起点 X 坐标完全对齐(同列各按钮
-                    "Photoshop / 3DCoat / Unreal Engine 5" 文字左边对齐)。
-                    图标随父级 color (currentColor) 自动跟随白 / 红。
-                  */}
                   <span className="flex items-center justify-center">
                     <Icon />
                   </span>
@@ -205,7 +239,36 @@ export default function AboutSkills() {
               );
             })}
           </div>
-        </div>
+
+          {/* Design Focus —— Skills 下方的小列表,填补右侧空白
+              视觉风格:左侧细红线 + 黑字,与 About 各小标题(Experience / Focus)
+              一致;条目间用细分隔线,不做大按钮,保持极简 */}
+          <div className="mt-10">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em]">
+              <span
+                className="mr-3 inline-block h-px w-8 bg-brand align-middle"
+                aria-hidden
+              />
+              {t.designFocus.title}
+            </p>
+            <ul className="divide-y divide-ink/15 border-y border-ink/15">
+              {t.designFocus.items.map((item) => (
+                <li
+                  key={item}
+                  // origin-left:hover 时整行向右展开放大,左侧红点保持锚定
+                  // hover:text-ink:同时把文字加深一档,呼应放大的互动感
+                  className="flex origin-left items-center gap-3 py-3 text-[14px] text-ink/80 transition-all duration-200 ease-out hover:scale-[1.04] hover:text-ink"
+                >
+                  <span
+                    className="inline-block h-1 w-1 flex-shrink-0 bg-brand"
+                    aria-hidden
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -54,19 +54,7 @@ export type WorkDetail = {
 // ─── 同一 section 内每张图共享的说明 ──────────────────────
 // 抽常量避免重复(改一处影响该 section 全部图)
 
-const NIO_ENV_TPL = {
-  description:
-    "A scene design image exploring the ruined church environment, atmosphere, structure, and narrative details.",
-  stage: "Concept Design",
-  tools: ["Photoshop", "Blender"],
-};
-
-const NIO_SKETCH_TPL = {
-  description:
-    "A preliminary sketch used to test composition, mood, character ideas, and design direction.",
-  stage: "Early Sketch",
-  tools: ["Photoshop"],
-};
+// NIO 每张图的说明已各自独立,不再使用共享模板。
 
 const VARIANT_DEVICE_TPL = {
   description:
@@ -93,7 +81,7 @@ export const workDetails: WorkDetail[] = [
     title: "NIO",
     category: "Narrative Horror Environment",
     description:
-      "A horror environment project built around a ruined church space. The project explores atmosphere, spatial storytelling, religious symbols, and the contrast between faith and decay through both early sketches and final environment design.",
+      "NIO is a narrative horror environment project centered on a ruined church space. The project focuses on spatial flow, ritual symbols, lighting hierarchy, and environmental storytelling from early layout sketches to final mood exploration.",
     projectType: "Environment Concept",
     stage: "Concept Design",
     tools: ["Photoshop", "Blender"],
@@ -101,41 +89,107 @@ export const workDetails: WorkDetail[] = [
     coverImage: "/works/01.png",
     sections: [
       {
-        label: "Environment Design",
+        label: "Design Process",
         images: [
-          { src: "/works/warehouse/001.png", title: "Environment 01", ...NIO_ENV_TPL },
-          { src: "/works/warehouse/01.png",  title: "Environment 02", ...NIO_ENV_TPL },
-          { src: "/works/warehouse/03.png",  title: "Environment 03", ...NIO_ENV_TPL },
-          { src: "/works/warehouse/04.png",  title: "Environment 04", ...NIO_ENV_TPL },
-          { src: "/works/warehouse/05.png",  title: "Environment 05", ...NIO_ENV_TPL },
-          { src: "/works/warehouse/06.png",  title: "Environment 06", ...NIO_ENV_TPL },
+          {
+            src: "/works/warehouse/001.png",
+            title: "First Floor Layout Study",
+            description: "An early layout sketch exploring the first-floor spatial structure, movement flow, and object placement of the scene.",
+            stage: "Concept Sketch",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/warehouse/01.png",
+            title: "Second Floor Layout Study",
+            description: "An early layout sketch exploring the second-floor spatial arrangement, ritual area, movement flow, and key object placement.",
+            stage: "Concept Sketch",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/warehouse/03.png",
+            title: "Story Door Design",
+            description: "A key asset design for the main story door, used to define an important progression point and reinforce the visual language of the cult space.",
+            stage: "Key Asset Design",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/warehouse/04.png",
+            title: "Hanging Cult Token Design",
+            description: "A key asset study for the hanging cult token on the first floor, exploring silhouette, symbolic detail, and its role as a narrative clue in the scene.",
+            stage: "Key Asset Design",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/warehouse/05.png",
+            title: "Sacrificial Figure Focal Point",
+            description: "A design study for the sacrificed figure on the second floor, exploring pose, silhouette, and how the body functions as a major visual focus in the ritual space.",
+            stage: "Key Visual Asset Design",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/warehouse/06.png",
+            title: "Second Floor Altar Design",
+            description: "An interactive altar prop design for the second floor, focused on ritual structure, readable interaction points, and decorative details.",
+            stage: "Interactive Prop Design",
+            tools: ["Photoshop"],
+          },
           {
             src: "/works/warehouse/07.jpg",
-            title: "Environment 07",
-            ...NIO_ENV_TPL,
+            title: "Enemy Concept Design 01",
+            description: "An enemy concept exploring body shape, clothing, and cult-related details, with a focus on silhouette and hostile presence.",
+            stage: "Character Concept Design",
+            tools: ["Photoshop"],
             orientation: "portrait",
           },
           {
             src: "/works/warehouse/08.jpg",
-            title: "Environment 08",
-            ...NIO_ENV_TPL,
+            title: "Enemy Concept Design 02",
+            description: "An enemy variation exploring costume proportions, staff design, and character identity for the cult faction.",
+            stage: "Character Concept Design",
+            tools: ["Photoshop"],
             orientation: "portrait",
           },
         ],
       },
       {
-        label: "Concept Sketch",
+        label: "Lighting Studies",
         images: [
-          { src: "/works/lighting/01.jpg", title: "Sketch 01", ...NIO_SKETCH_TPL },
+          {
+            src: "/works/lighting/01.jpg",
+            title: "First Floor Concept Image",
+            description: "An early concept image for the first floor, used to test atmosphere, composition, lighting direction, and the overall mood of the space.",
+            stage: "Environment Concept",
+            tools: ["Photoshop"],
+          },
           {
             src: "/works/lighting/02.png",
-            title: "Sketch 02",
-            ...NIO_SKETCH_TPL,
+            title: "Story Door Concept Image",
+            description: "A concept image focused on the first-floor story door, exploring its lighting, surrounding atmosphere, and narrative importance within the scene.",
+            stage: "Environment Concept",
+            tools: ["Photoshop"],
             orientation: "portrait",
           },
-          { src: "/works/lighting/03.png", title: "Sketch 03", ...NIO_SKETCH_TPL },
-          { src: "/works/lighting/04.png", title: "Sketch 04", ...NIO_SKETCH_TPL },
-          { src: "/works/lighting/05.png", title: "Sketch 05", ...NIO_SKETCH_TPL },
+          {
+            src: "/works/lighting/03.png",
+            title: "Second Floor Lighting Study 01",
+            description: "A lighting study for the second-floor ritual area, testing focal hierarchy, contrast, and how light guides attention toward the main scene element.",
+            stage: "Lighting Study",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/lighting/04.png",
+            title: "Second Floor Lighting Study 02",
+            description: "A lighting exploration testing a wider composition, shadow distribution, and the readability of the player's visual path through the second-floor space.",
+            stage: "Lighting Study",
+            tools: ["Photoshop"],
+          },
+          {
+            src: "/works/lighting/05.png",
+            title: "Second Floor Lighting Study 03",
+            description: "A lighting study exploring the final mood direction for the second floor, balancing darkness, backlight, and ritual atmosphere.",
+            stage: "Lighting Study",
+            tools: ["Photoshop"],
+          },
         ],
       },
     ],
@@ -151,7 +205,7 @@ export const workDetails: WorkDetail[] = [
     title: "VARIANT",
     category: "Sci-Fi Facility Development",
     description:
-      "A sci-fi environment development project focused on modular wall assets and environment devices. This project explores individual asset directions before building them into a larger facility scene.",
+      "VARIANT is a sci-fi facility development project focused on modular wall systems and environment asset exploration. The project tests industrial forms, material separation, and functional design language before building a complete scene.",
     projectType: "Sci-Fi Environment Development",
     stage: "Asset Design Exploration",
     tools: ["Photoshop", "Blender", "3DCoat", "Substance Painter"],

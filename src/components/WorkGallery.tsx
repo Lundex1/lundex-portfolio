@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SmartImage from "./SmartImage";
 import type { WorkSection } from "@/data/workDetails";
+import { useLang } from "./LangProvider";
 
 /**
  * 详情页画廊:左侧按 section 分组的缩略图,右侧大图 + 说明。
@@ -10,14 +11,20 @@ import type { WorkSection } from "@/data/workDetails";
  * 索引模型:section 是渲染分组,大图切换走 *全局 flat index*。
  * 所有 section 的图按顺序展开后,缩略图 01..N 对应全局 index 0..N-1。
  * 上下张按钮在全局数组里循环。
+ *
+ * 接收双语 sections:{ en, jp }。两套数组顺序、长度、src 严格对齐
+ * (由 workDetailsJp.ts 保证),所以 index 在两种语言下都指向同一张图。
  */
 export default function WorkGallery({
   sections,
 }: {
-  sections: WorkSection[];
+  sections: { en: WorkSection[]; jp: WorkSection[] };
 }) {
-  // 把所有 section 的图扁平成全局数组,用于 viewer 和上下张导航
-  const allImages = sections.flatMap((s) => s.images);
+  const { lang, t } = useLang();
+  const activeSections = sections[lang];
+
+  // 扁平成全局数组(基于当前语言,但图片顺序与另一语言一致)
+  const allImages = activeSections.flatMap((s) => s.images);
   const total = allImages.length;
 
   const [index, setIndex] = useState(0);
@@ -25,19 +32,34 @@ export default function WorkGallery({
 
   if (total === 0 || !current) return null;
 
-  // 上一张/下一张:循环不出界
   const goTo = (i: number) => setIndex(((i % total) + total) % total);
   const prev = () => goTo(index - 1);
   const next = () => goTo(index + 1);
-  // 关闭按钮:回到默认状态(第 1 张)
   const reset = () => setIndex(0);
 
-  // 给每个 section 计算它在全局扁平数组中的起始下标,
-  // 这样渲染分组时仍能算出每张图的全局 index(01..N)。
-  // 用 slice+reduce 纯函数式,避免 react-hooks lint 在 map 回调里抓"render 后 reassign"。
-  const sectionsWithOffset = sections.map((s, i) => ({
+  // 键盘 ← / → 切图;只在详情页才装,卸载时清理。
+  // 不监听 Esc / Home / End 等,避免和浏览器原生快捷键冲突。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // 忽略输入框聚焦时的按键
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setIndex((i) => ((i - 1) % total + total) % total);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setIndex((i) => (i + 1) % total);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [total]);
+
+  const sectionsWithOffset = activeSections.map((s, i) => ({
     ...s,
-    start: sections
+    start: activeSections
       .slice(0, i)
       .reduce((sum, sec) => sum + sec.images.length, 0),
   }));
@@ -70,7 +92,6 @@ export default function WorkGallery({
                     const i = section.start + localI;
                     const active = i === index;
                     const number = String(i + 1).padStart(2, "0");
-                    // 竖图用 contain 不裁切;横图正常 cover 撑满
                     const fit =
                       img.orientation === "portrait"
                         ? "object-contain"
@@ -114,13 +135,14 @@ export default function WorkGallery({
           {/* ─── 右:大图查看 + 说明 ──────────────────────── */}
           <div className="lg:col-span-6">
             <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
-              {/* 直接用普通 <img>:不走 SmartImage 的 errored state,
-                  保证 src 切换永远稳定;object-contain 保留全图不裁切 */}
+              {/* key={current.src} 让 <img> 每次切图都重挂 → image-fade-in
+                  动画自然触发,产生 ~320ms 淡入,不会硬切 */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                key={current.src}
                 src={current.src}
                 alt={current.title}
-                className="absolute inset-0 h-full w-full object-contain"
+                className="image-fade-in absolute inset-0 h-full w-full object-contain"
               />
 
               {/* 右上 X:回到默认状态(第 1 张) */}
@@ -193,15 +215,15 @@ export default function WorkGallery({
               </div>
             </div>
 
-            {/* 说明区 */}
-            <div className="mt-6">
+            {/* 说明区 —— key 让文字也跟着大图一起淡入,节奏统一 */}
+            <div key={current.src} className="image-fade-in mt-6">
               <h3 className="text-xl font-bold">{current.title}</h3>
 
               <div className="mt-4 border-l border-white/15 pl-5">
                 <dl className="space-y-4">
                   <div>
                     <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      Description
+                      {t.workDetail.description}
                     </dt>
                     <dd className="mt-2 text-sm leading-relaxed text-white/80">
                       {current.description}
@@ -209,13 +231,13 @@ export default function WorkGallery({
                   </div>
                   <div>
                     <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      Stage
+                      {t.workDetail.stage}
                     </dt>
                     <dd className="mt-2 text-sm">{current.stage}</dd>
                   </div>
                   <div>
                     <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      Tools
+                      {t.workDetail.tools}
                     </dt>
                     <dd className="mt-2 text-sm">
                       {current.tools.join(" / ")}

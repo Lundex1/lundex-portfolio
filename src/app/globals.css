@@ -227,6 +227,70 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────
+   Hero 背景动态效果
+   - 只作用于 .hero-bg-film 标记的背景图层
+   - hero-breath  : 缓慢呼吸 — scale(1→1.035→1) + opacity(0.86→1→0.86)
+                    8s 周期、ease-in-out,无任何 translate 抖动
+   - hero-flicker : 老电影式不规律频闪 — 仅改 filter(brightness/contrast)
+                    5.7s 周期(与呼吸 8s 不同步 → 视觉不规律),linear
+                    与 breath 互不冲突(各自驱动 transform/opacity 与 filter)
+   - film-grain   : 颗粒 overlay 低频明暗闪
+   - prefers-reduced-motion 下全部关闭
+   ────────────────────────────────────────────────────────── */
+.hero-bg-film {
+  animation:
+    hero-breath 8s ease-in-out infinite,
+    hero-flicker 5.7s linear infinite;
+}
+
+.hero-grain {
+  animation: film-grain 0.4s steps(4) infinite;
+}
+
+/* 缓慢呼吸:scale + opacity,不触碰 filter,留给 flicker 独立驱动
+   opacity 比上一版降低(0.72→0.85),配合更强的 paper 遮罩,整体更浅 */
+@keyframes hero-breath {
+  0%   { transform: scale(1);     opacity: 0.72; }
+  50%  { transform: scale(1.035); opacity: 0.85; }
+  100% { transform: scale(1);     opacity: 0.72; }
+}
+
+/* 老电影频闪:仅驱动 filter,关键帧采用不规则百分比 → 永远不会出现机械循环;
+   contrast 整体下调(0.92–0.98),让背景更柔和、不那么"实" */
+@keyframes hero-flicker {
+  0%   { filter: grayscale(1) brightness(0.97) contrast(0.94); }
+  9%   { filter: grayscale(1) brightness(0.93) contrast(0.92); }
+  12%  { filter: grayscale(1) brightness(1)    contrast(0.95); }
+  27%  { filter: grayscale(1) brightness(1.04) contrast(0.96); }
+  41%  { filter: grayscale(1) brightness(1.07) contrast(0.98); }
+  44%  { filter: grayscale(1) brightness(1.02) contrast(0.95); }
+  58%  { filter: grayscale(1) brightness(0.96) contrast(0.93); }
+  73%  { filter: grayscale(1) brightness(1.01) contrast(0.95); }
+  79%  { filter: grayscale(1) brightness(1.05) contrast(0.97); }
+  83%  { filter: grayscale(1) brightness(0.98) contrast(0.94); }
+  100% { filter: grayscale(1) brightness(0.97) contrast(0.94); }
+}
+
+@keyframes film-grain {
+  0%   { opacity: 0.045; }
+  50%  { opacity: 0.03;  }
+  100% { opacity: 0.05;  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-film {
+    animation: none;
+    transform: none;
+    filter: grayscale(1) brightness(1) contrast(0.95);
+    opacity: 0.78;
+  }
+  .hero-grain {
+    animation: none;
+    opacity: 0.04;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
    AudioController 浮动按钮的延迟淡入
    - 进入网站时立即挂载、尝试 autoplay,但按钮先隐藏避免遮挡 Intro
    - delay 与 Intro 总时长 (--intro-duration: 2.8s) 对齐,Intro 一消失立即可见
@@ -248,5 +312,146 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .audio-btn-reveal {
     animation: audio-btn-reveal 0.3s ease-out 0.5s forwards;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Audio 按钮播放中的小均衡器(3 根细条循环跳)
+   - 仅在 playing 状态加 .audio-eq 类
+   - 三个 span 走错开的 phase,模拟音乐律动
+   ────────────────────────────────────────────────────────── */
+.audio-eq {
+  display: inline-flex;
+  align-items: end;
+  gap: 2px;
+  height: 14px;
+}
+.audio-eq span {
+  display: block;
+  width: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+  animation: audio-eq-bar 0.9s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.audio-eq span:nth-child(1) { animation-delay: -0.25s; height: 6px;  }
+.audio-eq span:nth-child(2) { animation-delay: -0.55s; height: 10px; }
+.audio-eq span:nth-child(3) { animation-delay: -0.10s; height: 7px;  }
+
+@keyframes audio-eq-bar {
+  0%, 100% { transform: scaleY(0.5); }
+  50%      { transform: scaleY(1.4); }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Section 滚入显形(Reveal)
+   - 元素初始下移 16px + opacity 0
+   - 进入视口后切到 .reveal-shown → 平滑回到位
+   - 用 transition,而不是 keyframes,便于 transition-delay 错峰
+   ────────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ──────────────────────────────────────────────────────────
+   单张图片淡入(<img>.image-fade-in / WorkGallery 大图切换)
+   - 用 key 触发重挂时,opacity 0 → 1
+   ────────────────────────────────────────────────────────── */
+.image-fade-in {
+  animation: image-fade-in 320ms ease-out both;
+}
+@keyframes image-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   路由切换 / 整页淡入
+   - 详情页 <main> 挂上 .page-in 时短暂从 0.4 → 1
+   - 不动 transform,只 opacity,避免影响 sticky / fixed 元素
+   ────────────────────────────────────────────────────────── */
+.page-in {
+  animation: page-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes page-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   语言切换瞬间的整页淡过(由 LangProvider 控制 body 类)
+   - setLang 调用时给 body 加 .lang-switching → main 短暂半透明
+   - 150ms 内自动移除,过渡回 1
+   ────────────────────────────────────────────────────────── */
+body.lang-switching main {
+  opacity: 0.35;
+}
+main {
+  transition: opacity 160ms ease-out;
+}
+
+/* ──────────────────────────────────────────────────────────
+   详情页顶部滚动进度条
+   - 1px 高、品牌红、贴 header 下沿
+   - 优先用 animation-timeline: scroll(root)(支持现代 Chromium/Safari)
+   - 不支持的浏览器走 JS fallback:由 ScrollProgress 组件设 --p (0–1)
+   ────────────────────────────────────────────────────────── */
+.scroll-progress {
+  position: fixed;
+  left: 0;
+  top: 4rem; /* header 高 64px */
+  height: 2px;
+  width: 100%;
+  background-color: var(--color-brand);
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  z-index: 60;
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: scroll-progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+  @keyframes scroll-progress-grow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   reduce-motion 一次性关掉本次新增的所有动效
+   ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-shown {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .image-fade-in,
+  .page-in {
+    animation: none;
+  }
+  .audio-eq span {
+    animation: none;
+  }
+  main {
+    transition: none;
+  }
+  body.lang-switching main {
+    opacity: 1;
+  }
+  .scroll-progress {
+    display: none;
   }
 }

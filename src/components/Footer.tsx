@@ -1,4 +1,9 @@
-// 底部联系方式 —— 之后改链接来这里
+"use client";
+
+import { useLang } from "./LangProvider";
+import Reveal from "./Reveal";
+
+// 联系方式链接(社交平台名保持英文,不进字典)
 const links = [
   { label: "ArtStation", href: "https://www.artstation.com/lundex" },
   {
@@ -10,27 +15,35 @@ const links = [
 ];
 
 export default function Footer() {
+  const { lang, t } = useLang();
+
+  // 英文 slogan 走 uppercase 字距;日文不需要 uppercase,字号也略大一档保持可读
+  const sloganClass =
+    lang === "jp"
+      ? "text-[11px] leading-relaxed tracking-[0.18em]"
+      : "text-[10px] uppercase leading-relaxed tracking-[0.3em]";
+
   return (
     <footer
       id="contact"
       className="bg-ink px-6 py-16 text-white lg:px-12"
     >
-      <div className="mx-auto grid max-w-[1360px] gap-8 md:grid-cols-3 md:items-center">
+      <Reveal className="mx-auto grid max-w-[1360px] gap-8 md:grid-cols-3 md:items-center">
         <div className="flex items-center gap-4">
           <span className="flex h-9 w-9 items-center justify-center bg-brand text-sm font-extrabold">
             L
           </span>
-          <p className="text-[10px] uppercase leading-relaxed tracking-[0.3em]">
-            Worlds are Built.
+          <p className={sloganClass}>
+            {t.footer.slogan[0]}
             <br />
-            Meaning is Designed.
+            {t.footer.slogan[1]}
           </p>
         </div>
 
         <p className="text-xs text-white/50 md:text-center">
-          © {new Date().getFullYear()} LUNDEX
+          {t.footer.rights[0]}
           <br />
-          All Rights Reserved.
+          {t.footer.rights[1]}
         </p>
 
         <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm md:justify-end">
@@ -40,19 +53,24 @@ export default function Footer() {
               <li key={l.label}>
                 <a
                   href={l.href}
-                  className="transition-colors hover:text-brand"
+                  className="group inline-flex items-center gap-1.5 transition-colors hover:text-brand"
                   {...(isExternal && {
                     target: "_blank",
                     rel: "noopener noreferrer",
                   })}
                 >
+                  {/* hover 时左侧小红点显形 → 比单纯换色更有交互反馈 */}
+                  <span
+                    className="inline-block h-1 w-1 origin-center scale-0 bg-brand transition-transform duration-300 group-hover:scale-100"
+                    aria-hidden
+                  />
                   {l.label}
                 </a>
               </li>
             );
           })}
         </ul>
-      </div>
+      </Reveal>
     </footer>
   );
 }
