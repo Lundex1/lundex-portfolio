@@ -37,7 +37,10 @@ export default function IntroOverlay({
 
   // 用 ref 保存 onComplete,避免父组件重渲染时回调引用变化
   const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+  // 同步最新引用在独立 effect 里执行(render 期写 ref 会被 react-hooks lint 拦截)
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const reduced =

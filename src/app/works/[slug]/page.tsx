@@ -39,7 +39,7 @@ export default async function WorkDetailPage({
       <Header />
       <main>
         <ProjectHero work={work} />
-        <WorkGallery images={work.images} />
+        <WorkGallery sections={work.sections} />
       </main>
       <Footer />
     </div>

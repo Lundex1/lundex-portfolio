@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Props = {
   src: string;
@@ -21,11 +21,9 @@ export default function SmartImage({
 }: Props) {
   const [errored, setErrored] = useState(false);
 
-  // src 变化时复位 errored —— 否则若组件实例被复用(例如在 viewer 里换图),
-  // 一次错误会让后续所有 src 切换都误判为失败,永远显示 fallback。
-  useEffect(() => {
-    setErrored(false);
-  }, [src]);
+  // 当前用法下每个 SmartImage 实例的 src 固定不变(缩略图、详情页 cover 都是
+  // 单实例单 src),errored 状态自然不需要复位。如果未来在某处复用同一个
+  // SmartImage 实例并切换 src,改用 <SmartImage key={src} ...> 强制重挂。
 
   if (errored || !src) {
     return (

@@ -3,7 +3,9 @@ import HeroController from "@/components/HeroController";
 import FeaturedWorks from "@/components/FeaturedWorks";
 import AboutSkills from "@/components/AboutSkills";
 import Footer from "@/components/Footer";
-import AudioController from "@/components/AudioController";
+
+// 注:AudioController 已移至 src/app/layout.tsx,让背景音乐在
+// 首页 ↔ 详情页跳转时不会被卸载、不会重新播放。
 
 export default function Home() {
   return (
@@ -16,8 +18,6 @@ export default function Home() {
         <AboutSkills />
       </main>
       <Footer />
-      {/* 背景音乐 + 右上角浮动开关,只在首页挂载;不影响详情页 */}
-      <AudioController />
     </>
   );
 }

@@ -41,20 +41,24 @@ export default function Hero({ start = false }: { start?: boolean }) {
               className="mr-3 inline-block h-px w-8 bg-brand align-middle"
               aria-hidden
             />
-            Concept Designer
+            CONCEPT DESIGNER
           </p>
 
           <h1 className="text-[52px] font-extrabold leading-[0.95] tracking-tight sm:text-[72px] lg:text-[104px]">
             <span className={`block ${titleClass}`}>Environment</span>
-            <span className={`block ${titleClass}`}>Concept Design</span>
+            <span className={`block ${titleClass}`}>Concept</span>
+            <span className={`block ${titleClass}`}>Design</span>
           </h1>
 
           <div
-            className={`mt-10 max-w-md border-l-2 border-ink pl-5 ${descClass}`}
+            className={`mt-10 max-w-md space-y-4 border-l-2 border-ink pl-5 text-[15px] leading-relaxed ${descClass}`}
           >
-            <p className="text-[15px] leading-relaxed">
-              I am an environment concept designer focused on game spaces,
-              cinematic mood, and 3D-assisted design workflows.
+            <p>
+              Environment concept design for narrative game worlds.
+            </p>
+            <p>
+              I build atmospheric spaces with sketching, 3D blockouts,
+              lighting, and story-driven visual design.
             </p>
           </div>
 
