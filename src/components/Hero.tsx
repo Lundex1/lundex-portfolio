@@ -20,10 +20,11 @@ export default function Hero({ start = false }: { start?: boolean }) {
   const descClass = start ? "animate-hero-desc" : "opacity-0";
 
   // 日文版标题字号稍小一档,避免"環境アート"在小屏发生拥挤
+  // 移动端基础档上调一档:36 → 48(EN),32 → 42(JP)—— 让标题在窄屏明显占主导
   const titleSizeClass =
     lang === "jp"
-      ? "text-[32px] sm:text-[48px] lg:text-[60px] xl:text-[80px]"
-      : "text-[36px] sm:text-[56px] lg:text-[70px] xl:text-[92px]";
+      ? "text-[42px] sm:text-[52px] lg:text-[60px] xl:text-[80px]"
+      : "text-[48px] sm:text-[60px] lg:text-[70px] xl:text-[92px]";
 
   return (
     <section className="relative overflow-hidden px-6 pb-24 pt-28 lg:px-12 lg:pb-32 lg:pt-40">
@@ -82,7 +83,7 @@ export default function Hero({ start = false }: { start?: boolean }) {
           </h1>
 
           <div
-            className={`mt-10 max-w-lg space-y-4 border-l-2 border-ink pl-5 text-base leading-7 ${descClass}`}
+            className={`mt-10 max-w-lg space-y-4 border-l-2 border-ink pl-5 text-[14px] leading-6 sm:text-base sm:leading-7 ${descClass}`}
           >
             <p>{t.hero.desc[0]}</p>
             <p>{t.hero.desc[1]}</p>
