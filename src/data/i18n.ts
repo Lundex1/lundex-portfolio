@@ -23,6 +23,10 @@ export type UI = {
     desc: [string, string];
     cta: string;
     basedIn: string;
+    /** 底部信息条 —— 三段:Selected 标签 / 项目名 / 设计方向 */
+    selectedLabel: string;
+    selectedProjects: string;
+    selectedFocus: string;
   };
   featured: { eyebrow: string };
   about: {
@@ -36,7 +40,11 @@ export type UI = {
     goal: string;
   };
   skills: { eyebrow: string };
-  designFocus: { title: string; items: string[] };
+  /** Design Focus —— 编号方法论:每项包含序号、短标题、说明 */
+  designFocus: {
+    title: string;
+    items: { id: string; title: string; desc: string }[];
+  };
   workDetail: {
     back: string;
     projectType: string;
@@ -66,6 +74,10 @@ export const ui: Record<Lang, UI> = {
       ],
       cta: "View Works",
       basedIn: "Based in Earth",
+      selectedLabel: "Selected Works 2025 – 2026",
+      selectedProjects: "NIO / VARIANT",
+      selectedFocus:
+        "Environment Concept · 3D Assisted Workflow · Lighting Study",
     },
     featured: { eyebrow: "Featured Works" },
     about: {
@@ -77,7 +89,9 @@ export const ui: Record<Lang, UI> = {
         "Selected Participant · Capcom Portfolio Review Program",
         "Outsourced Project Contribution · ByteDance",
       ],
-      focusTitle: "Focus",
+      // 左侧 About 的"Core Skills"—— 改名以与右侧"Design Focus"区分,
+      // 避免两个标题都叫 Focus,概念重复
+      focusTitle: "Core Skills",
       focus: [
         "Environment Concept Design",
         "Lighting",
@@ -90,11 +104,31 @@ export const ui: Record<Lang, UI> = {
     designFocus: {
       title: "Design Focus",
       items: [
-        "Narrative Space",
-        "Lighting & Mood",
-        "Player Flow",
-        "3D Blockout",
-        "Asset Language",
+        {
+          id: "01",
+          title: "Narrative Space",
+          desc: "Build spaces around story beats.",
+        },
+        {
+          id: "02",
+          title: "Lighting & Mood",
+          desc: "Use light to guide focus and emotion.",
+        },
+        {
+          id: "03",
+          title: "Player Flow",
+          desc: "Design paths that support gameplay reading.",
+        },
+        {
+          id: "04",
+          title: "3D Blockout",
+          desc: "Test scale, structure, and spatial intent.",
+        },
+        {
+          id: "05",
+          title: "Asset Language",
+          desc: "Create forms and details that support the world.",
+        },
       ],
     },
     workDetail: {
@@ -125,6 +159,9 @@ export const ui: Record<Lang, UI> = {
       ],
       cta: "作品を見る",
       basedIn: "Based in Earth",
+      selectedLabel: "選抜作品 2025 – 2026",
+      selectedProjects: "NIO / VARIANT",
+      selectedFocus: "環境コンセプト · 3D制作支援 · ライティング検証",
     },
     featured: { eyebrow: "作品" },
     about: {
@@ -136,7 +173,9 @@ export const ui: Record<Lang, UI> = {
         "CAPCOM ポートフォリオレビュー 選抜参加",
         "ByteDance 外部委託案件 参加",
       ],
-      focusTitle: "重点分野",
+      // 与 EN 的 "Core Skills" 对应 —— 左侧"主要スキル",
+      // 与右侧"制作の重点"区分
+      focusTitle: "主要スキル",
       focus: [
         "環境コンセプト",
         "ライティング",
@@ -148,13 +187,33 @@ export const ui: Record<Lang, UI> = {
     skills: { eyebrow: "使用ソフト" },
     designFocus: {
       title: "制作の重点",
-      // 短版本,保证排版稳定
+      // 标题尽量短,说明 14–18 字以内 → 不撑坏布局
       items: [
-        "物語空間",
-        "光と雰囲気",
-        "プレイヤー動線",
-        "3D検証",
-        "アセット設計",
+        {
+          id: "01",
+          title: "物語空間",
+          desc: "ストーリーに沿って空間を組み立てる。",
+        },
+        {
+          id: "02",
+          title: "光と雰囲気",
+          desc: "光で視線と感情を導く。",
+        },
+        {
+          id: "03",
+          title: "プレイヤー動線",
+          desc: "読み取りやすい経路を設計する。",
+        },
+        {
+          id: "04",
+          title: "3D検証",
+          desc: "スケールと構造を検証する。",
+        },
+        {
+          id: "05",
+          title: "アセット設計",
+          desc: "世界観を支える造形を作る。",
+        },
       ],
     },
     workDetail: {

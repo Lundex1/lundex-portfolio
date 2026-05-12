@@ -49,7 +49,7 @@ export default function NextProjectLink({
         <Link
           href={`/works/${target.slug}`}
           aria-label={`${label}: ${target.title}`}
-          className={`group flex items-center gap-5 border-t border-white/10 px-2 py-10 transition-colors duration-300 hover:bg-brand sm:gap-8 sm:py-14 ${
+          className={`group flex items-center gap-5 border-t border-white/10 px-2 py-7 transition-colors duration-300 hover:bg-brand sm:gap-8 sm:py-9 ${
             isPrev ? "flex-row-reverse" : ""
           }`}
         >
@@ -75,31 +75,34 @@ export default function NextProjectLink({
             </p>
           </div>
 
-          {/* 箭头:next → / previous ←,hover 沿方向滑出 */}
+          {/* 箭头 —— 与 WorkCard 箭头同款规格:48×18 / stroke 2 / linecap square
+              视觉重量足够匹配大标题,不再是细线小符号 */}
           <div className="shrink-0 text-white transition-colors duration-300 group-hover:text-ink">
             <svg
-              width="32"
-              height="14"
-              viewBox="0 0 32 14"
+              width="48"
+              height="18"
+              viewBox="0 0 48 18"
               fill="none"
               aria-hidden
               className={`transition-transform duration-300 ${
                 isPrev
-                  ? "group-hover:-translate-x-2"
-                  : "group-hover:translate-x-2"
+                  ? "group-hover:-translate-x-3"
+                  : "group-hover:translate-x-3"
               }`}
             >
               {isPrev ? (
                 <path
-                  d="M8 1L2 7l6 6M32 7H4"
+                  d="M10 1L2 9l8 8M48 9H4"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="2"
+                  strokeLinecap="square"
                 />
               ) : (
                 <path
-                  d="M24 1l6 6-6 6M0 7h28"
+                  d="M38 1l8 8-8 8M0 9h44"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="2"
+                  strokeLinecap="square"
                 />
               )}
             </svg>

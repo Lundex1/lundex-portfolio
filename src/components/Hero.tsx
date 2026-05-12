@@ -27,15 +27,21 @@ export default function Hero({ start = false }: { start?: boolean }) {
 
   return (
     <section className="relative overflow-hidden px-6 pb-24 pt-28 lg:px-12 lg:pb-32 lg:pt-40">
-      {/* 背景图层 + 老电影效果
-          hero-bg-film: CSS 动画同时驱动 flicker(brightness/contrast/opacity 微波动)
-          和 shake(亚像素 translate 微颤)。grayscale 写在 keyframe 里以便与
-          brightness/contrast 合并到同一个 filter 属性,不会被覆盖。 */}
+      {/* 背景图层 —— 双层嵌套,各自承担不同动画属性:
+          外层 .hero-bg-shake :  老电视 CRT 抖动(translate 突跳),
+                                  单独占用 transform 通道
+          内层 .hero-bg-film  :  breath(scale)+ flicker(filter)
+                                  scale 与 outer 的 translate 在不同元素上,
+                                  合成时各自独立累计,不冲突。 */}
       <div
         aria-hidden
-        className="hero-bg-film pointer-events-none absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/works/BG/01.png')" }}
-      />
+        className="hero-bg-shake pointer-events-none absolute inset-0"
+      >
+        <div
+          className="hero-bg-film absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/works/BG/01.png')" }}
+        />
+      </div>
 
       {/* 胶片颗粒层 —— 纯 CSS radial-gradient 噪点,
           hero-grain 动画轻微闪烁 opacity 模拟胶片颗粒 */}
@@ -103,13 +109,28 @@ export default function Hero({ start = false }: { start?: boolean }) {
             </svg>
           </a>
 
-          <p className="mt-16 text-[10px] uppercase tracking-[0.4em] text-muted">
+          {/* Selected Works 信息条 —— 顶部细线 + 三段:Label / Projects / Focus
+              再加一档可读性:字号统一上调 1px,透明度上调一级,
+              但仍不抢 Hero 大标题(标题 lg:text-[70px] vs 此处最大 17px) */}
+          <div className="mt-16 flex max-w-2xl flex-col gap-3 border-t border-ink/20 pt-6 sm:flex-row sm:items-center sm:gap-5">
+            <span className="text-[12px] font-bold uppercase tracking-[0.3em] text-brand">
+              {t.hero.selectedLabel}
+            </span>
             <span
-              className="mr-3 inline-block h-px w-12 bg-current align-middle"
+              className="hidden h-px w-6 bg-ink/30 sm:block"
               aria-hidden
             />
-            {t.hero.basedIn}
-          </p>
+            <span className="text-[17px] font-extrabold tracking-tight text-ink">
+              {t.hero.selectedProjects}
+            </span>
+            <span
+              className="hidden h-px w-6 bg-ink/30 sm:block"
+              aria-hidden
+            />
+            <span className="text-[12px] uppercase tracking-[0.2em] text-ink/80">
+              {t.hero.selectedFocus}
+            </span>
+          </div>
         </div>
 
         {/* 右:几何装饰(平板及以上才显示,不抢作品视觉中心) */}

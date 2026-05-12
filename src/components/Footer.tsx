@@ -17,11 +17,12 @@ const links = [
 export default function Footer() {
   const { lang, t } = useLang();
 
-  // 英文 slogan 走 uppercase 字距;日文不需要 uppercase,字号也略大一档保持可读
+  // 英文 slogan 走 uppercase 字距;日文不需要 uppercase,字号略大一档保持可读
+  // 字号整体 +1px(10→11 / 11→12),Footer 可读性提升一档但仍克制
   const sloganClass =
     lang === "jp"
-      ? "text-[11px] leading-relaxed tracking-[0.18em]"
-      : "text-[10px] uppercase leading-relaxed tracking-[0.3em]";
+      ? "text-[12px] leading-relaxed tracking-[0.18em]"
+      : "text-[11px] uppercase leading-relaxed tracking-[0.3em]";
 
   return (
     <footer
@@ -40,13 +41,15 @@ export default function Footer() {
           </p>
         </div>
 
-        <p className="text-xs text-white/50 md:text-center">
+        {/* 版权:/50 → /70,从"几乎看不见"提到"低调可读" */}
+        <p className="text-xs leading-relaxed text-white/70 md:text-center">
           {t.footer.rights[0]}
           <br />
           {t.footer.rights[1]}
         </p>
 
-        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm md:justify-end">
+        {/* 社交链接:保持低调(/85 而非纯白),hover 转品牌红 */}
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85 md:justify-end">
           {links.map((l) => {
             const isExternal = !l.href.startsWith("mailto:");
             return (

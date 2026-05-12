@@ -67,10 +67,11 @@ export default function WorkGallery({
   return (
     <section className="bg-ink px-6 pb-24 text-white lg:px-12 lg:pb-32">
       <div className="mx-auto max-w-[1360px]">
-        {/* 与 Hero 之间的细分割线 */}
+        {/* 与 Hero 之间的细分割线(桌面 + 移动共用) */}
         <div className="border-t border-white/10" aria-hidden />
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:gap-12">
+        {/* ═══ 桌面 lg+ ═══ 缩略图 + 大图 Viewer 双栏布局(原结构) */}
+        <div className="mt-12 hidden gap-10 lg:grid lg:grid-cols-12 lg:gap-12">
           {/* ─── 左:缩略图(按 section 分组,组上方有小标题) ─── */}
           <div className="lg:col-span-6">
             {sectionsWithOffset.map((section, sIdx) => (
@@ -247,6 +248,79 @@ export default function WorkGallery({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ═══ 移动 < lg ═══ 垂直图文卡片流
+            每张图 = 一张独立卡片:编号 / 大图 / 标题 / 描述 / Stage·Tools 行
+            图片紧挨自己的说明,用户滑到哪张就看到哪张的说明,不需要先翻完所有缩略图
+            竖图 / 横图都用 w-full h-auto 自然显示,不裁切、不变形 */}
+        <div className="mt-10 space-y-14 lg:hidden">
+          {sectionsWithOffset.map((section) => (
+            <div key={section.label}>
+              {/* Section 小标题(与桌面 eyebrow 风格一致) */}
+              <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
+                <span
+                  className="mr-3 inline-block h-px w-6 bg-brand align-middle"
+                  aria-hidden
+                />
+                {section.label}
+              </p>
+
+              <div className="space-y-12">
+                {section.images.map((img, localI) => {
+                  const i = section.start + localI;
+                  const number = String(i + 1).padStart(2, "0");
+                  return (
+                    <article key={`${img.src}-${i}`} className="space-y-4">
+                      {/* 小编号 —— 红色 / 等宽数字 */}
+                      <span className="block font-mono text-[11px] font-bold tabular-nums tracking-wider text-brand">
+                        {number}
+                      </span>
+
+                      {/* 图片 —— 横竖都用 w-full h-auto,保持原比例不变形
+                          loading lazy / decoding async:移动端节省流量与渲染 */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img.src}
+                        alt={img.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="block h-auto w-full bg-white/[0.04]"
+                      />
+
+                      {/* 标题 + 描述紧挨图片 */}
+                      <h3 className="text-[17px] font-bold leading-snug">
+                        {img.title}
+                      </h3>
+                      <p className="text-[14px] leading-relaxed text-white/80">
+                        {img.description}
+                      </p>
+
+                      {/* Stage / Tools 小信息行 —— 两列紧凑,不抢主内容 */}
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/10 pt-4">
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                            {t.workDetail.stage}
+                          </dt>
+                          <dd className="mt-1.5 text-[12px] text-white/85">
+                            {img.stage}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                            {t.workDetail.tools}
+                          </dt>
+                          <dd className="mt-1.5 text-[12px] text-white/85">
+                            {img.tools.join(" / ")}
+                          </dd>
+                        </div>
+                      </dl>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

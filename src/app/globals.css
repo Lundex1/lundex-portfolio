@@ -227,16 +227,23 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Hero 背景动态效果
-   - 只作用于 .hero-bg-film 标记的背景图层
-   - hero-breath  : 缓慢呼吸 — scale(1→1.035→1) + opacity(0.86→1→0.86)
-                    8s 周期、ease-in-out,无任何 translate 抖动
-   - hero-flicker : 老电影式不规律频闪 — 仅改 filter(brightness/contrast)
-                    5.7s 周期(与呼吸 8s 不同步 → 视觉不规律),linear
-                    与 breath 互不冲突(各自驱动 transform/opacity 与 filter)
-   - film-grain   : 颗粒 overlay 低频明暗闪
+   Hero 背景动态效果(三层独立动画,周期互错 → 视觉永不循环)
+   - 外层 .hero-bg-shake : 老电视/CRT 抖动 —— translate 突跳
+                            1.8s linear、关键帧"长静止 + 短跳"模拟扫描噪
+                            放在外层独立 div,避免与内层 scale 抢同一 transform
+   - 内层 .hero-bg-film  :
+       · hero-breath  缓慢呼吸 scale(1→1.035→1) + opacity,8s ease-in-out
+       · hero-flicker 不规律频闪,仅 filter(brightness/contrast);5.7s linear
+                       此版振幅整体下调(brightness 0.96–1.04, contrast 0.95–1.02)
+                       让 flicker 退到后景,让 shake 成为主感官
+   - .hero-grain         : 颗粒 overlay 低频明暗闪
    - prefers-reduced-motion 下全部关闭
    ────────────────────────────────────────────────────────── */
+.hero-bg-shake {
+  animation: hero-tv-shake 1.8s linear infinite;
+  will-change: transform, filter;
+}
+
 .hero-bg-film {
   animation:
     hero-breath 8s ease-in-out infinite,
@@ -247,6 +254,46 @@ body {
   animation: film-grain 0.4s steps(4) infinite;
 }
 
+/* 老电视画面抖动 —— 大部分时间静止,在 6 个不规则节点突跳 1–3px 再立刻归位。
+   突跳与归位之间只跨 2% 周期(~36ms),视觉上是"snap → 静止",
+   而不是滑过去,模仿 CRT 同步丢帧 / 扫描线漂移。
+
+   动态模糊:与 translate 同帧出现 blur(1–1.8px),归位帧 blur(0)。
+   linear 时间下 blur 在 36ms 内从 0 → 峰值 → 0,形成"快速拖影"
+   →"清晰"的对比,强化 CRT 失焦感。
+   双突跳节点 blur 略大,与更剧烈的位移呼应。
+   外层 .hero-bg-shake 自己占 filter 通道,不影响内层 .hero-bg-film 的
+   brightness/contrast(它在另一个元素上)。 */
+@keyframes hero-tv-shake {
+  0%, 7%   { transform: translate(0, 0);     filter: blur(0); }
+  9%       { transform: translate(0, -3px);  filter: blur(1.2px); }
+  11%      { transform: translate(0, 0);     filter: blur(0); }
+
+  22%      { transform: translate(0, 0);     filter: blur(0); }
+  24%      { transform: translate(2px, 1px); filter: blur(1px); }
+  26%      { transform: translate(0, 0);     filter: blur(0); }
+
+  38%      { transform: translate(0, 0);     filter: blur(0); }
+  40%      { transform: translate(-2px, 0);  filter: blur(1px); }
+  42%      { transform: translate(0, 0);     filter: blur(0); }
+
+  53%      { transform: translate(0, 0);     filter: blur(0); }
+  55%      { transform: translate(1px, 3px); filter: blur(1.4px); }
+  57%      { transform: translate(0, 0);     filter: blur(0); }
+
+  68%      { transform: translate(0, 0);     filter: blur(0); }
+  70%      { transform: translate(3px, -2px);filter: blur(1.4px); }
+  72%      { transform: translate(0, 0);     filter: blur(0); }
+
+  /* 末尾"双突跳"—— blur 略大,模拟两次失焦叠加 */
+  83%      { transform: translate(0, 0);     filter: blur(0); }
+  85%      { transform: translate(-2px, 2px);filter: blur(1.6px); }
+  87%      { transform: translate(1px, -1px);filter: blur(1.8px); }
+  89%      { transform: translate(0, 0);     filter: blur(0); }
+
+  100%     { transform: translate(0, 0);     filter: blur(0); }
+}
+
 /* 缓慢呼吸:scale + opacity,不触碰 filter,留给 flicker 独立驱动
    opacity 比上一版降低(0.72→0.85),配合更强的 paper 遮罩,整体更浅 */
 @keyframes hero-breath {
@@ -255,20 +302,20 @@ body {
   100% { transform: scale(1);     opacity: 0.72; }
 }
 
-/* 老电影频闪:仅驱动 filter,关键帧采用不规则百分比 → 永远不会出现机械循环;
-   contrast 整体下调(0.92–0.98),让背景更柔和、不那么"实" */
+/* 老电影频闪:振幅压窄到 brightness 0.96–1.04 / contrast 0.94–1.02,
+   让 flicker 成为背景层的"呼吸",不再抢镜;shake 成为主感官刺激。 */
 @keyframes hero-flicker {
-  0%   { filter: grayscale(1) brightness(0.97) contrast(0.94); }
-  9%   { filter: grayscale(1) brightness(0.93) contrast(0.92); }
-  12%  { filter: grayscale(1) brightness(1)    contrast(0.95); }
-  27%  { filter: grayscale(1) brightness(1.04) contrast(0.96); }
-  41%  { filter: grayscale(1) brightness(1.07) contrast(0.98); }
-  44%  { filter: grayscale(1) brightness(1.02) contrast(0.95); }
-  58%  { filter: grayscale(1) brightness(0.96) contrast(0.93); }
-  73%  { filter: grayscale(1) brightness(1.01) contrast(0.95); }
-  79%  { filter: grayscale(1) brightness(1.05) contrast(0.97); }
-  83%  { filter: grayscale(1) brightness(0.98) contrast(0.94); }
-  100% { filter: grayscale(1) brightness(0.97) contrast(0.94); }
+  0%   { filter: grayscale(1) brightness(0.98) contrast(0.96); }
+  9%   { filter: grayscale(1) brightness(0.96) contrast(0.94); }
+  12%  { filter: grayscale(1) brightness(1)    contrast(0.96); }
+  27%  { filter: grayscale(1) brightness(1.02) contrast(0.97); }
+  41%  { filter: grayscale(1) brightness(1.04) contrast(0.99); }
+  44%  { filter: grayscale(1) brightness(1.01) contrast(0.96); }
+  58%  { filter: grayscale(1) brightness(0.97) contrast(0.95); }
+  73%  { filter: grayscale(1) brightness(1.01) contrast(0.97); }
+  79%  { filter: grayscale(1) brightness(1.03) contrast(0.98); }
+  83%  { filter: grayscale(1) brightness(0.99) contrast(0.95); }
+  100% { filter: grayscale(1) brightness(0.98) contrast(0.96); }
 }
 
 @keyframes film-grain {
@@ -278,6 +325,11 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-bg-shake {
+    animation: none;
+    transform: none;
+    filter: none;
+  }
   .hero-bg-film {
     animation: none;
     transform: none;
