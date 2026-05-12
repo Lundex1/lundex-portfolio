@@ -48,7 +48,13 @@ export default async function WorkDetailPage({
       {/* page-in:进入详情页时整页 ~420ms 淡入,衔接首页 → 详情页节奏 */}
       <main className="page-in">
         <ProjectHero work={pair} />
-        <WorkGallery sections={{ en: pair.en.sections, jp: pair.jp.sections }} />
+        <WorkGallery
+          sections={{
+            en: pair.en.sections,
+            jp: pair.jp.sections,
+            zh: pair.zh.sections,
+          }}
+        />
         {/* 底部"下一/上一项目"导航 —— 客户端组件,按 useLang() 选取对应语言数据 */}
         <NextProjectLink currentSlug={slug} />
       </main>

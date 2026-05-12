@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { workDetails } from "@/data/workDetails";
 import { workDetailsJp } from "@/data/workDetailsJp";
+import { workDetailsZh } from "@/data/workDetailsZh";
 import { useLang } from "./LangProvider";
 
 /**
@@ -23,8 +24,9 @@ export default function NextProjectLink({
 }) {
   const { lang, t } = useLang();
 
-  // 根据语言选用对应的数据源 —— 两份数组 slug / 顺序严格对齐
-  const list = lang === "jp" ? workDetailsJp : workDetails;
+  // 根据语言选用对应的数据源 —— 三份数组 slug / 顺序严格对齐
+  const list =
+    lang === "jp" ? workDetailsJp : lang === "zh" ? workDetailsZh : workDetails;
   const idx = list.findIndex((w) => w.slug === currentSlug);
   if (idx < 0) return null;
 

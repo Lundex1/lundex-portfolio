@@ -9,6 +9,13 @@ import {
 } from "react";
 import { ui, type Lang, LANG_STORAGE_KEY, type UI } from "@/data/i18n";
 
+/** 把内部 Lang 键映射到 BCP 47 标签 → 写到 <html lang="..."> */
+function htmlLangFor(l: Lang): string {
+  if (l === "jp") return "ja";
+  if (l === "zh") return "zh-CN";
+  return "en";
+}
+
 /**
  * 全站语言上下文。
  *
@@ -40,9 +47,9 @@ export default function LangProvider({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LANG_STORAGE_KEY);
-      if (saved === "en" || saved === "jp") {
+      if (saved === "en" || saved === "jp" || saved === "zh") {
         setLangState(saved);
-        document.documentElement.lang = saved === "jp" ? "ja" : "en";
+        document.documentElement.lang = htmlLangFor(saved);
       }
     } catch {
       /* localStorage 不可用时静默回退到默认 en */
@@ -59,7 +66,7 @@ export default function LangProvider({
       // 这样 EN ↔ JP 文字替换被夹在 fade 中间,不会被看到硬切
       window.setTimeout(() => {
         setLangState(l);
-        document.documentElement.lang = l === "jp" ? "ja" : "en";
+        document.documentElement.lang = htmlLangFor(l);
         // 下一帧再移除类,让浏览器把新文本渲到 dom 之后再触发 fade-in
         requestAnimationFrame(() => {
           body.classList.remove("lang-switching");

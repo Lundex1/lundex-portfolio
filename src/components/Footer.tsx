@@ -17,12 +17,12 @@ const links = [
 export default function Footer() {
   const { lang, t } = useLang();
 
-  // 英文 slogan 走 uppercase 字距;日文不需要 uppercase,字号略大一档保持可读
-  // 字号整体 +1px(10→11 / 11→12),Footer 可读性提升一档但仍克制
+  // 英文 slogan 走 uppercase 字距;CJK(jp / zh)不需要 uppercase,
+  // 字号略大一档保持可读
   const sloganClass =
-    lang === "jp"
-      ? "text-[12px] leading-relaxed tracking-[0.18em]"
-      : "text-[11px] uppercase leading-relaxed tracking-[0.3em]";
+    lang === "en"
+      ? "text-[11px] uppercase leading-relaxed tracking-[0.3em]"
+      : "text-[12px] leading-relaxed tracking-[0.18em]";
 
   return (
     <footer

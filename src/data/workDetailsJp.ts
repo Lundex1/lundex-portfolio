@@ -218,13 +218,15 @@ export function getWorkBySlugJp(slug: string): WorkDetail | undefined {
   return workDetailsJp.find((w) => w.slug === slug);
 }
 
-// 兜底:返回某 slug 的双语数据对。给 server component 用,把两套数据一起
+// 兜底:返回某 slug 的三语数据组。给 server component 用,把三套数据一起
 // 传给客户端组件,组件根据 useLang() 选用,无需在 server 端读 localStorage。
 import { workDetails } from "./workDetails";
+import { workDetailsZh } from "./workDetailsZh";
 export function getLocalizedWorkPair(slug: string) {
   const en = workDetails.find((w) => w.slug === slug);
   const jp = workDetailsJp.find((w) => w.slug === slug);
-  if (!en || !jp) return null;
-  return { en, jp };
+  const zh = workDetailsZh.find((w) => w.slug === slug);
+  if (!en || !jp || !zh) return null;
+  return { en, jp, zh };
 }
 

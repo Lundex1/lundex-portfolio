@@ -86,7 +86,7 @@ export default function Header() {
             </ul>
           </nav>
 
-          {/* 语言切换:EN / JP。小屏取消左侧竖线,只剩 EN/JP 两按钮,节省空间 */}
+          {/* 语言切换:EN / JP / ZH。小屏取消左侧竖线,节省空间 */}
           <div
             className="flex items-center gap-1.5 pl-2 text-[11px] font-semibold tracking-wider sm:border-l sm:border-white/15 sm:pl-4 sm:text-[12px] lg:pl-5"
             role="group"
@@ -118,6 +118,21 @@ export default function Header() {
               }`}
             >
               {t.langToggle.jp}
+            </button>
+            <span className="text-white/25" aria-hidden>
+              /
+            </span>
+            <button
+              type="button"
+              onClick={() => setLang("zh")}
+              aria-pressed={lang === "zh"}
+              className={`transition-colors ${
+                lang === "zh"
+                  ? "text-brand"
+                  : "text-white/55 hover:text-white"
+              }`}
+            >
+              {t.langToggle.zh}
             </button>
           </div>
         </div>

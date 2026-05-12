@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import type { WorkDetail } from "@/data/workDetails";
+import type { Lang } from "@/data/i18n";
 import { useLang } from "./LangProvider";
 
 /**
  * 详情页 Hero 区域:左项目信息,右大封面图。
  *
- * 接收双语数据对 `{ en, jp }`,在客户端根据 useLang() 选用一份渲染。
- * 这样父级 page.tsx 可以保持 server component(只需 await params),
- * 同时切换语言不刷新页面、不触发路由跳转。
+ * 接收三语数据组 `Record<Lang, WorkDetail>`,在客户端根据 useLang()
+ * 选用一份渲染。这样父级 page.tsx 可以保持 server component
+ * (只需 await params),同时切换语言不刷新页面、不触发路由跳转。
  */
 export default function ProjectHero({
   work,
 }: {
-  work: { en: WorkDetail; jp: WorkDetail };
+  work: Record<Lang, WorkDetail>;
 }) {
   const { lang, t } = useLang();
   const w = work[lang];

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import SmartImage from "./SmartImage";
 import type { WorkSection } from "@/data/workDetails";
+import type { Lang } from "@/data/i18n";
 import { useLang } from "./LangProvider";
 
 /**
@@ -18,7 +19,7 @@ import { useLang } from "./LangProvider";
 export default function WorkGallery({
   sections,
 }: {
-  sections: { en: WorkSection[]; jp: WorkSection[] };
+  sections: Record<Lang, WorkSection[]>;
 }) {
   const { lang, t } = useLang();
   const activeSections = sections[lang];

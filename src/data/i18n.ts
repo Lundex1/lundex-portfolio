@@ -11,12 +11,12 @@
  * workDetails.ts(en) 和 workDetailsJp.ts(jp),通过 slug 配对。
  */
 
-export type Lang = "en" | "jp";
+export type Lang = "en" | "jp" | "zh";
 export const LANG_STORAGE_KEY = "lundex.lang";
 
 export type UI = {
   nav: { works: string; about: string; contact: string };
-  langToggle: { en: string; jp: string };
+  langToggle: { en: string; jp: string; zh: string };
   hero: {
     eyebrow: string;
     title: [string, string, string];
@@ -64,7 +64,7 @@ export type UI = {
 export const ui: Record<Lang, UI> = {
   en: {
     nav: { works: "Works", about: "About", contact: "Contact" },
-    langToggle: { en: "EN", jp: "JP" },
+    langToggle: { en: "EN", jp: "JP", zh: "ZH" },
     hero: {
       eyebrow: "CONCEPT DESIGNER",
       title: ["LUNDEX", "Environment Art", "Portfolio"],
@@ -149,7 +149,7 @@ export const ui: Record<Lang, UI> = {
 
   jp: {
     nav: { works: "作品", about: "自己紹介", contact: "連絡先" },
-    langToggle: { en: "EN", jp: "JP" },
+    langToggle: { en: "EN", jp: "JP", zh: "ZH" },
     hero: {
       eyebrow: "コンセプトデザイナー",
       title: ["LUNDEX", "環境アート", "ポートフォリオ"],
@@ -228,6 +228,89 @@ export const ui: Record<Lang, UI> = {
     },
     footer: {
       slogan: ["世界は構築される。", "意味は設計される。"],
+      rights: ["© 2026 LUNDEX", "All Rights Reserved."],
+    },
+  },
+
+  zh: {
+    nav: { works: "作品", about: "关于", contact: "联系" },
+    langToggle: { en: "EN", jp: "JP", zh: "ZH" },
+    hero: {
+      eyebrow: "概念设计师",
+      title: ["LUNDEX", "环境艺术", "作品集"],
+      desc: [
+        "面向叙事型游戏空间的环境艺术设计。",
+        "通过草图、3D Blockout、灯光和视觉叙事,构建具有氛围和空间逻辑的游戏场景。",
+      ],
+      cta: "查看作品",
+      basedIn: "Based in Earth",
+      selectedLabel: "精选作品 2025 – 2026",
+      selectedProjects: "NIO / VARIANT",
+      selectedFocus: "环境概念 · 3D 辅助流程 · 灯光研究",
+    },
+    featured: { eyebrow: "精选作品" },
+    about: {
+      eyebrow: "关于我",
+      title: "个人介绍",
+      bio: "专注于游戏空间、氛围塑造和 3D 辅助视觉开发的环境概念设计学习者。",
+      experienceTitle: "经历",
+      experience: [
+        "CAPCOM 作品集评审项目 入选参加",
+        "字节跳动外包项目 参与",
+      ],
+      // 与 EN "Core Skills" / JP "主要スキル"对应
+      focusTitle: "核心能力",
+      focus: [
+        "环境概念设计",
+        "灯光设计",
+        "3D Blockout",
+        "资产设计",
+      ],
+      goal: "目标是在游戏行业成为环境概念设计师,设计能够支撑玩法、氛围和叙事的游戏空间。",
+    },
+    skills: { eyebrow: "使用软件" },
+    designFocus: {
+      title: "设计关注点",
+      items: [
+        {
+          id: "01",
+          title: "叙事空间",
+          desc: "围绕故事节点构建空间。",
+        },
+        {
+          id: "02",
+          title: "灯光与氛围",
+          desc: "用光引导视线与情绪。",
+        },
+        {
+          id: "03",
+          title: "玩家动线",
+          desc: "设计可读、清晰的游玩路径。",
+        },
+        {
+          id: "04",
+          title: "3D Blockout",
+          desc: "验证尺度、结构与空间意图。",
+        },
+        {
+          id: "05",
+          title: "资产语言",
+          desc: "用形态与细节支撑世界观。",
+        },
+      ],
+    },
+    workDetail: {
+      back: "返回作品",
+      projectType: "类型",
+      stage: "阶段",
+      tools: "工具",
+      date: "年份",
+      description: "说明",
+      nextProject: "下一项目",
+      previousProject: "上一项目",
+    },
+    footer: {
+      slogan: ["世界被构建。", "意义被设计。"],
       rights: ["© 2026 LUNDEX", "All Rights Reserved."],
     },
   },
