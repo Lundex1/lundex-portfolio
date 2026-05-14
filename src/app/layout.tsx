@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import AudioController from "@/components/AudioController";
 import LangProvider from "@/components/LangProvider";
@@ -39,6 +40,13 @@ export default function RootLayout({
           */}
           <AudioController />
         </LangProvider>
+        {/*
+          Vercel Web Analytics —— 自动捕获页面浏览量、来源、设备、地区。
+          - 仅在 production 注入脚本,本地开发不影响
+          - 零 cookie / GDPR 合规
+          - 数据看板:Vercel 项目页 → Analytics 标签
+        */}
+        <Analytics />
       </body>
     </html>
   );
