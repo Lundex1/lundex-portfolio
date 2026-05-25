@@ -54,6 +54,7 @@ export type UI = {
     description: string;
     nextProject: string;
     previousProject: string;
+    content: string;
   };
   footer: {
     slogan: [string, string];
@@ -140,6 +141,7 @@ export const ui: Record<Lang, UI> = {
       description: "Description",
       nextProject: "Next Project",
       previousProject: "Previous Project",
+      content: "Content",
     },
     footer: {
       slogan: ["Worlds are Built.", "Meaning is Designed."],
@@ -225,6 +227,7 @@ export const ui: Record<Lang, UI> = {
       description: "説明",
       nextProject: "次のプロジェクト",
       previousProject: "前のプロジェクト",
+      content: "内容",
     },
     footer: {
       slogan: ["世界は構築される。", "意味は設計される。"],
@@ -308,6 +311,7 @@ export const ui: Record<Lang, UI> = {
       description: "说明",
       nextProject: "下一项目",
       previousProject: "上一项目",
+      content: "内容",
     },
     footer: {
       slogan: ["世界被构建。", "意义被设计。"],

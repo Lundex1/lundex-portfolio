@@ -178,6 +178,7 @@ export const workDetailsZh: WorkDetail[] = [
           { src: "/works/device/04.jpg", title: "设备方案 04", ...VARIANT_DEVICE_TPL_ZH },
           { src: "/works/device/05.jpg", title: "设备方案 05", ...VARIANT_DEVICE_TPL_ZH },
           { src: "/works/device/06.jpg", title: "设备方案 06", ...VARIANT_DEVICE_TPL_ZH },
+          { src: "/works/2233.png", title: "设备方案 07", ...VARIANT_DEVICE_TPL_ZH },
         ],
       },
       {
@@ -208,6 +209,26 @@ export const workDetailsZh: WorkDetail[] = [
             tools: ["Photoshop", "Blender", "3DCoat", "Substance Painter"],
           },
         ],
+      },
+      {
+        // 视频展示分类 —— 基于 UE5 GASP 系统的玩法与角色系统测试
+        label: "GAMEPLAY SYSTEM DEMO",
+        images: [],
+        video: {
+          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          title: "开发测试展示",
+          description:
+            "基于 UE5 GASP 系统进行角色控制、武器交互与白盒关卡测试的开发验证。",
+          stage: "系统测试 / 玩法原型 / 白盒验证",
+          tools: ["Unreal Engine 5", "GASP", "Blueprint"],
+          content: [
+            "未装备武器移动测试",
+            "飞行系统测试",
+            "武器动作与开枪系统",
+            "潜行模式",
+            "白盒关卡测试",
+          ],
+        },
       },
     ],
   },

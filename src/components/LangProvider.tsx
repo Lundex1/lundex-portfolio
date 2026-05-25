@@ -48,6 +48,8 @@ export default function LangProvider({
     try {
       const saved = localStorage.getItem(LANG_STORAGE_KEY);
       if (saved === "en" || saved === "jp" || saved === "zh") {
+        // 按 localStorage 初始化语言(SSR 安全):有意的挂载初始化模式
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLangState(saved);
         document.documentElement.lang = htmlLangFor(saved);
       }

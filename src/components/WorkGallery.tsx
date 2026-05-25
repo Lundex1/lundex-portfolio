@@ -24,22 +24,20 @@ export default function WorkGallery({
   const { lang, t } = useLang();
   const activeSections = sections[lang];
 
-  // 扁平成全局数组(基于当前语言,但图片顺序与另一语言一致)
-  const allImages = activeSections.flatMap((s) => s.images);
+  // 拆分:有图的 section 进缩略图/Viewer 画廊;带 video 的 section 作为
+  // 独立视频块渲染在画廊之后(不参与图片索引流)
+  const imageSections = activeSections.filter((s) => s.images.length > 0);
+  const videoSections = activeSections.filter((s) => s.video);
+
+  // 扁平成全局数组(仅图片 section,基于当前语言;顺序与其他语言一致)
+  const allImages = imageSections.flatMap((s) => s.images);
   const total = allImages.length;
 
   const [index, setIndex] = useState(0);
   const current = allImages[index];
 
-  if (total === 0 || !current) return null;
-
-  const goTo = (i: number) => setIndex(((i % total) + total) % total);
-  const prev = () => goTo(index - 1);
-  const next = () => goTo(index + 1);
-  const reset = () => setIndex(0);
-
-  // 键盘 ← / → 切图;只在详情页才装,卸载时清理。
-  // 不监听 Esc / Home / End 等,避免和浏览器原生快捷键冲突。
+  // 键盘 ← / → 切图;放在任何 early return 之前,保证 hooks 调用顺序在
+  // 每次渲染都一致(rules-of-hooks)。不监听 Esc / Home / End 等。
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // 忽略输入框聚焦时的按键
@@ -58,9 +56,16 @@ export default function WorkGallery({
     return () => window.removeEventListener("keydown", onKey);
   }, [total]);
 
-  const sectionsWithOffset = activeSections.map((s, i) => ({
+  if (total === 0 || !current) return null;
+
+  const goTo = (i: number) => setIndex(((i % total) + total) % total);
+  const prev = () => goTo(index - 1);
+  const next = () => goTo(index + 1);
+  const reset = () => setIndex(0);
+
+  const sectionsWithOffset = imageSections.map((s, i) => ({
     ...s,
-    start: activeSections
+    start: imageSections
       .slice(0, i)
       .reduce((sum, sec) => sum + sec.images.length, 0),
   }));
@@ -323,6 +328,94 @@ export default function WorkGallery({
             </div>
           ))}
         </div>
+
+        {/* ═══ 视频展示块(GAMEPLAY SYSTEM DEMO 等)═══
+            带 video 的 section 独立渲染,不进缩略图 / Viewer 流。
+            桌面:视频左 7 列 + 说明右 5 列;移动:视频在上、说明在下,均 100% 宽。
+            iframe 保持 16:9(aspect-video),无 autoplay。 */}
+        {videoSections.map((section) => {
+          const v = section.video;
+          if (!v) return null;
+          return (
+            <div key={section.label} className="mt-16 lg:mt-20">
+              {/* Section 标题 —— 与 DEVICE / WALL DESIGN 完全一致的样式 */}
+              <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
+                <span
+                  className="mr-3 inline-block h-px w-6 bg-brand align-middle"
+                  aria-hidden
+                />
+                {section.label}
+              </p>
+
+              <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
+                {/* 视频:16:9 响应式 iframe */}
+                <div className="lg:col-span-7">
+                  <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
+                    <iframe
+                      src={v.embedUrl}
+                      title={v.title}
+                      className="absolute inset-0 h-full w-full"
+                      loading="lazy"
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+
+                {/* 说明块 —— 复用图片说明区样式(标题 + 左红边 dl) */}
+                <div className="lg:col-span-5">
+                  <h3 className="text-xl font-bold">{v.title}</h3>
+                  <div className="mt-4 border-l border-white/15 pl-5">
+                    <dl className="space-y-4">
+                      <div>
+                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                          {t.workDetail.description}
+                        </dt>
+                        <dd className="mt-2 text-sm leading-relaxed text-white/80">
+                          {v.description}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                          {t.workDetail.stage}
+                        </dt>
+                        <dd className="mt-2 text-sm">{v.stage}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                          {t.workDetail.tools}
+                        </dt>
+                        <dd className="mt-2 text-sm">{v.tools.join(" / ")}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                          {t.workDetail.content}
+                        </dt>
+                        <dd className="mt-2">
+                          <ul className="space-y-1.5">
+                            {v.content.map((c) => (
+                              <li
+                                key={c}
+                                className="flex items-start gap-2 text-sm text-white/80"
+                              >
+                                <span
+                                  className="mt-[7px] inline-block h-1 w-1 flex-shrink-0 bg-brand"
+                                  aria-hidden
+                                />
+                                {c}
+                              </li>
+                            ))}
+                          </ul>
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

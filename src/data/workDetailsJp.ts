@@ -179,6 +179,7 @@ export const workDetailsJp: WorkDetail[] = [
           { src: "/works/device/04.jpg", title: "デバイス案 04", ...VARIANT_DEVICE_TPL_JP },
           { src: "/works/device/05.jpg", title: "デバイス案 05", ...VARIANT_DEVICE_TPL_JP },
           { src: "/works/device/06.jpg", title: "デバイス案 06", ...VARIANT_DEVICE_TPL_JP },
+          { src: "/works/2233.png", title: "デバイス案 07", ...VARIANT_DEVICE_TPL_JP },
         ],
       },
       {
@@ -209,6 +210,26 @@ export const workDetailsJp: WorkDetail[] = [
             tools: ["Photoshop", "Blender", "3DCoat", "Substance Painter"],
           },
         ],
+      },
+      {
+        // 视频展示分类 —— UE5 GASP 系统的玩法与角色系统测试
+        label: "GAMEPLAY SYSTEM DEMO",
+        images: [],
+        video: {
+          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          title: "開発テストデモ",
+          description:
+            "UE5 GASPシステムをベースに、キャラクター操作、武器インタラクション、ホワイトボックスレベルテストを検証した開発デモ。",
+          stage: "システムテスト / ゲームプレイプロトタイプ / ホワイトボックス検証",
+          tools: ["Unreal Engine 5", "GASP", "Blueprint"],
+          content: [
+            "武器未装備時の移動テスト",
+            "飛行システムテスト",
+            "武器アクションと射撃システム",
+            "ステルスモード",
+            "ホワイトボックスレベルテスト",
+          ],
+        },
       },
     ],
   },

@@ -28,9 +28,10 @@ export default function Reveal({
     const el = ref.current;
     if (!el) return;
 
-    // 用户已经设置 reduce-motion → 直接显形,跳过观察
+    // 用户已经设置 reduce-motion → 直接显形,跳过观察(SSR 安全的挂载初始化)
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mq.matches) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShown(true);
       return;
     }

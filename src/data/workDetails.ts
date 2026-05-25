@@ -31,10 +31,25 @@ export type WorkImage = {
   orientation?: "portrait" | "landscape";
 };
 
-/** 项目内部分组,例如 NIO 项目里的 "Environment Design" / "Concept Sketch" */
+/** 视频展示块(如 VARIANT 的 GAMEPLAY SYSTEM DEMO)。
+ *  用 YouTube embed 嵌入,不走本地 video 文件;说明字段与图片一致,
+ *  另加 content[](测试内容逐项展示)。 */
+export type WorkVideo = {
+  /** 必须是 https://www.youtube.com/embed/<id> 形式,不能用普通分享链接 */
+  embedUrl: string;
+  title: string;
+  description: string;
+  stage: string;
+  tools: string[];
+  content: string[];
+};
+
+/** 项目内部分组,例如 NIO 项目里的 "Environment Design" / "Concept Sketch"。
+ *  若带 video 字段,该 section 渲染为视频展示块(此时 images 为空数组)。 */
 export type WorkSection = {
   label: string;
   images: WorkImage[];
+  video?: WorkVideo;
 };
 
 export type WorkDetail = {
@@ -221,6 +236,7 @@ export const workDetails: WorkDetail[] = [
           { src: "/works/device/04.jpg", title: "Device 04", ...VARIANT_DEVICE_TPL },
           { src: "/works/device/05.jpg", title: "Device 05", ...VARIANT_DEVICE_TPL },
           { src: "/works/device/06.jpg", title: "Device 06", ...VARIANT_DEVICE_TPL },
+          { src: "/works/2233.png", title: "Device 07", ...VARIANT_DEVICE_TPL },
         ],
       },
       {
@@ -230,6 +246,26 @@ export const workDetails: WorkDetail[] = [
           { src: "/works/wall/02.jpg", title: "Wall 02", ...VARIANT_WALL_TPL },
           { src: "/works/wall/03.jpg", title: "Wall 03", ...VARIANT_WALL_TPL },
         ],
+      },
+      {
+        // 视频展示分类 —— 基于 UE5 GASP 系统的玩法与角色系统测试
+        label: "GAMEPLAY SYSTEM DEMO",
+        images: [],
+        video: {
+          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          title: "Development Test Demo",
+          description:
+            "A development demo based on the UE5 GASP system, testing character movement, weapon interaction, and whitebox level design.",
+          stage: "System Testing / Gameplay Prototype / Whitebox Validation",
+          tools: ["Unreal Engine 5", "GASP", "Blueprint"],
+          content: [
+            "Unarmed Movement Test",
+            "Flight System Test",
+            "Weapon Animation & Shooting System",
+            "Stealth Mode",
+            "Whitebox Level Test",
+          ],
+        },
       },
     ],
   },

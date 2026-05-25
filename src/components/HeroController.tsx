@@ -63,7 +63,9 @@ export default function HeroController() {
     }
 
     // 2. 非刷新进入(站内跳转 / 后退):若已播过则跳过
+    // 此处按浏览器存储初始化状态(SSR 安全),是有意为之的挂载初始化模式
     if (sessionStorage.getItem(STORAGE_KEY) === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldPlayIntro(false);
       setIntroDone(true); // 直接放行 Hero 动画
     }
