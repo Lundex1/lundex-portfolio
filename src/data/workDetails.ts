@@ -252,7 +252,7 @@ export const workDetails: WorkDetail[] = [
         label: "GAMEPLAY SYSTEM DEMO",
         images: [],
         video: {
-          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          embedUrl: "https://www.youtube.com/embed/qxc540hAxA4",
           title: "Development Test Demo",
           description:
             "A development demo based on the UE5 GASP system, testing character movement, weapon interaction, and whitebox level design.",

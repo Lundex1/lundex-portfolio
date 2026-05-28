@@ -215,7 +215,7 @@ export const workDetailsZh: WorkDetail[] = [
         label: "GAMEPLAY SYSTEM DEMO",
         images: [],
         video: {
-          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          embedUrl: "https://www.youtube.com/embed/qxc540hAxA4",
           title: "开发测试展示",
           description:
             "基于 UE5 GASP 系统进行角色控制、武器交互与白盒关卡测试的开发验证。",

@@ -216,7 +216,7 @@ export const workDetailsJp: WorkDetail[] = [
         label: "GAMEPLAY SYSTEM DEMO",
         images: [],
         video: {
-          embedUrl: "https://www.youtube.com/embed/9gsWpKenUmI",
+          embedUrl: "https://www.youtube.com/embed/qxc540hAxA4",
           title: "開発テストデモ",
           description:
             "UE5 GASPシステムをベースに、キャラクター操作、武器インタラクション、ホワイトボックスレベルテストを検証した開発デモ。",
