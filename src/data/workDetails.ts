@@ -29,14 +29,23 @@ export type WorkImage = {
   /** 竖图 = portrait,横图 = landscape(可省略,默认按横图处理)。
    *  仅影响 Gallery 缩略图的 object-fit:portrait 用 contain 不裁切。 */
   orientation?: "portrait" | "landscape";
+  /** true = 该条目是本地视频(src 指向 mp4):
+   *  缩略图显示首帧 + ▶ 标记,大图查看器 / 移动卡片用 <video controls> 播放。
+   *  视频条目参与画廊全局编号,可排在任意位置。 */
+  isVideo?: boolean;
 };
 
 /** 视频展示块(如 VARIANT 的 GAMEPLAY SYSTEM DEMO)。
- *  用 YouTube embed 嵌入,不走本地 video 文件;说明字段与图片一致,
- *  另加 content[](测试内容逐项展示)。 */
+ *  两种来源二选一:
+ *    · embedUrl —— YouTube embed(https://www.youtube.com/embed/<id>)
+ *    · localSrc —— public 下的本地视频文件(如 /works/project3/demo.mp4),
+ *                  用原生 <video controls> 播放
+ *  说明字段与图片一致,另加 content[](测试内容逐项展示)。 */
 export type WorkVideo = {
-  /** 必须是 https://www.youtube.com/embed/<id> 形式,不能用普通分享链接 */
-  embedUrl: string;
+  /** YouTube embed 链接;与 localSrc 二选一 */
+  embedUrl?: string;
+  /** 本地视频路径(public 下);与 embedUrl 二选一,同时存在时优先 localSrc */
+  localSrc?: string;
   title: string;
   description: string;
   stage: string;
@@ -266,6 +275,145 @@ export const workDetails: WorkDetail[] = [
             "Whitebox Level Test",
           ],
         },
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  //  03 — PROJECT 03(占位名 —— 正式项目名 / 文案待用户提供后替换)
+  // ═══════════════════════════════════════════════════════
+  {
+    slug: "culmination",
+    number: "03",
+    title: "CULMINATION",
+    category: "Game Concept Art Book",
+    description:
+      "CULMINATION is my graduation project — a game concept art book. An alternate 1976: the Cold War never ended, resources ran dry, unemployment climbed, and faith in nations collapsed long before their borders did. Into that vacuum stepped MERIDIAN CONSOLIDATED, a conglomerate selling a single promise — “Everything has its place, everyone has a purpose.” It was more efficient than any government, so it became one. The book is built around three sites — the Nexus Exchange, the Ordinance Office, and the Quota Station — and around MERIDIAN PASSAGE, the interstellar expansion program the company is now selling to a planet it has already finished sorting. The system runs flawlessly; only nobody is asked what they want anymore. A machine grades your aptitude, and you are entered into the register as an asset. And behind that perfect order, something that does not belong to this world is watching.",
+    projectType: "Graduation Project",
+    stage: "Concept Design",
+    tools: ["Photoshop"],
+    date: "2026",
+    coverImage: "/works/project3/cover.jpg",
+    sections: [
+      {
+        // 书籍设计 —— 封面平面稿 + 实物精装展示
+        label: "Book Design",
+        images: [
+          {
+            // 01 —— 封面设计(平面稿)
+            src: "/works/project3/cover.jpg",
+            title: "Art Book Cover",
+            description:
+              "The cover of the CULMINATION art book, designed from scratch in a 1970s idiom. I drew the wordmark in two custom variants — one solid, one striped — and set it against halftone gradients, topographic linework, and warm orange banding: the print language of MERIDIAN CONSOLIDATED.",
+            stage: "Cover Design / Typography",
+            tools: ["Photoshop"],
+          },
+          {
+            // 02 —— 实物精装书展示(两角度)
+            src: "/works/project3/mockup.jpg",
+            title: "Print Mockup",
+            description:
+              "A print mockup of the finished book — a landscape hardcover shown from two angles, so the cover, spine, and color banding can be judged as one object rather than a flat layout.",
+            stage: "Print Mockup",
+            tools: ["Photoshop"],
+          },
+        ],
+      },
+      {
+        label: "Key Environment",
+        images: [
+          {
+            // 03 —— 秩序办事处大场景
+            src: "/works/project3/01.jpg",
+            title: "The Ordinance Office",
+            description:
+              "Staffed by clerks from MERIDIAN CONSOLIDATED's administration division, the Ordinance Office handles personnel reassignment and the civil registry — every posting, every relocation, every file on every citizen begins at one of these desks. The architecture is built on the rounded forms of the 1970s: flared columns, chamfered casework, a continuous arcade. Palette and lighting are held in a warm register and the skylight floods the hall, so the room reads as a reception lounge rather than the place where lives are reassigned.",
+            stage: "Key Environment",
+            tools: ["3DCoat", "Blender", "Photoshop"],
+          },
+        ],
+      },
+      {
+        label: "Character Design",
+        images: [
+          {
+            // 04 —— 公司吉祥物 Tally:三视图 + 表情表
+            src: "/works/project3/04.png",
+            title: "Tally — Corporate IP Character",
+            description:
+              "Tally is MERIDIAN CONSOLIDATED's official IP character, the company's public face on posters, packaging, and broadcast. He is drawn in classic American cartoon style — rubber-hose limbs, an exaggerated head-to-body ratio, a mouth line that never quite comes down — and dressed in the company's cream jacket and orange roundel. The sheet carries a full turnaround plus an expression range, because what a mascot is allowed to feel is itself a corporate decision.",
+            stage: "Character Concept",
+            tools: ["Photoshop"],
+          },
+        ],
+      },
+      {
+        label: "Demo Video",
+        images: [
+          {
+            // 05 —— 视频条目(参与画廊编号,viewer 内播放)
+            src: "/works/project3/demo.mp4",
+            title: "Corporate Promotional Film (1965)",
+            description:
+              "An early promotional film released by MERIDIAN CONSOLIDATED in 1965 to sell the public on the company itself. It imitates 1960s American cartoon advertising — limited animation, coarse print texture, and a narrator far too pleased about the future being handled for you. I designed the storyboard and every character in it; the animation was produced with Seedance 2.0 as an assist, and the final edit and grade were done in Premiere Pro.",
+            stage: "Storyboard / Animation / Edit",
+            tools: ["Photoshop", "Seedance 2.0", "Premiere Pro"],
+            isVideo: true,
+          },
+        ],
+      },
+      {
+        // 星际拓展计划宣传海报(两张拼合)
+        label: "Program Posters",
+        images: [
+          {
+            src: "/works/project3/posters.jpg",
+            title: "CULMINATION: MERIDIAN PASSAGE",
+            description:
+              "Two key art posters for MERIDIAN PASSAGE — the company's interstellar expansion program, and the campaign the whole book is named after. Everything is presented in the corporate print language: halftone skies, orbital route diagrams, a single figure at the edge of somewhere newly assigned. A program that moves people off-world is sold with exactly the same warmth as a staff benefit.",
+            stage: "Key Art / Poster Design",
+            tools: ["Photoshop"],
+            orientation: "portrait",
+          },
+        ],
+      },
+      {
+        label: "Old Mercy Monastery",
+        images: [
+          {
+            // 06 —— 旧慈悲修道院:静止期(暖)
+            src: "/works/project3/02.png",
+            title: "Dormant",
+            description:
+              "Deep in a mine shaft in former Russian territory — now zoned for gas extraction — MERIDIAN CONSOLIDATED keeps a facility. At the end of the shaft stands the sealed Old Mercy Monastery, a place name that appears in no registry. Dormant, the chamber is warm: candle flame, gilded stone, the winged form beneath the vault lit like an altarpiece. It still looks like a church.",
+            stage: "Lighting Study",
+            tools: ["Photoshop"],
+          },
+          {
+            // 07 —— 旧慈悲修道院:汲取期(冷)
+            src: "/works/project3/03.jpg",
+            title: "Extraction",
+            description:
+              "The moment extraction begins, the whole monastery turns blue at once and the wailing starts — no record states where the sound comes from. The geometry does not change; its nature does. Chromatic fringing tears at the edges, blue-white glare presses down from the vault, and the winged form stops reading as an icon and starts reading as something developing into view. The company files this under routine operations.",
+            stage: "Lighting Study",
+            tools: ["Blender", "Photoshop"],
+          },
+        ],
+      },
+      {
+        // 未完成插图 —— 排在最后
+        label: "Unassigned",
+        images: [
+          {
+            src: "/works/project3/illustration.jpg",
+            title: "Unfinished Illustration",
+            description:
+              "An illustration still in progress — flats down, rendering not started. In a book about a company that assigns everyone a purpose, this one has not been given a place yet. It may end up inside; it may not.",
+            stage: "Work in Progress",
+            tools: ["Photoshop"],
+            orientation: "portrait",
+          },
+        ],
       },
     ],
   },

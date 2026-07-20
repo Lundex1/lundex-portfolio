@@ -55,6 +55,14 @@ export type UI = {
     nextProject: string;
     previousProject: string;
     content: string;
+    index: string;
+  };
+  /** 进入 CULMINATION 详情页时弹出的公司通告 */
+  projectNotice: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    dismiss: string;
   };
   footer: {
     slogan: [string, string];
@@ -142,6 +150,13 @@ export const ui: Record<Lang, UI> = {
       nextProject: "Next Project",
       previousProject: "Previous Project",
       content: "Content",
+      index: "Index",
+    },
+    projectNotice: {
+      eyebrow: "Notice",
+      title: "MERIDIAN CONSOLIDATED",
+      body: "The company reminds you that this page does not contain the complete graduation project. The full archive remains under maintenance. Please await further notice.",
+      dismiss: "Acknowledged",
     },
     footer: {
       slogan: ["Worlds are Built.", "Meaning is Designed."],
@@ -228,6 +243,13 @@ export const ui: Record<Lang, UI> = {
       nextProject: "次のプロジェクト",
       previousProject: "前のプロジェクト",
       content: "内容",
+      index: "目次",
+    },
+    projectNotice: {
+      eyebrow: "お知らせ",
+      title: "MERIDIAN CONSOLIDATED",
+      body: "本ページは卒業制作のすべてではないことをお知らせいたします。完全な記録は現在整備中です。追ってのご案内をお待ちください。",
+      dismiss: "確認しました",
     },
     footer: {
       slogan: ["世界は構築される。", "意味は設計される。"],
@@ -312,6 +334,13 @@ export const ui: Record<Lang, UI> = {
       nextProject: "下一项目",
       previousProject: "上一项目",
       content: "内容",
+      index: "目录",
+    },
+    projectNotice: {
+      eyebrow: "通告",
+      title: "MERIDIAN CONSOLIDATED",
+      body: "公司提醒您:本页内容并非毕业作品的全部。完整档案仍在检修中,请等待后续通知。",
+      dismiss: "已知悉",
     },
     footer: {
       slogan: ["世界被构建。", "意义被设计。"],

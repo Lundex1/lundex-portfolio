@@ -65,13 +65,11 @@ export default function FeaturedWorks() {
         </Reveal>
 
         {/*
-          桌面(lg+)── 12 列网格,两个项目 row-start-1 各占 6 列
-            · NIO   :col-span-6 col-start-1
-            · VARIANT:col-span-6 col-start-7 + lg:mt-6(24px 静态错位)
-          两卡静止状态下尺寸完全相同(同列宽 + 同 variant),
-          视觉主次完全由 hover 协调:鼠标进入哪张 → 那张变 active,
-          另一张自动 inactive(缩小 + 下移 + 70% opacity)。
-          移动 ── 单列堆叠,无 mt 偏移,无 hover transform
+          桌面(lg+)── 12 列网格:
+            · 第一行:项目 1(col 1-6)+ 项目 2(col 7-12 + mt-6 轻微错位)
+            · 第二行:项目 3 居中(col 4-9),与上一行留 mt-12
+          hover 协调:进入哪张 → 那张 active,其余全部 inactive。
+          移动 ── 单列堆叠,无偏移,无 hover transform
         */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-10 lg:gap-y-0">
           {projects[0] && (
@@ -108,6 +106,25 @@ export default function FeaturedWorks() {
                     : "inactive"
                 }
                 onPointerEnter={() => setHovering(projects[1]!.id)}
+                onPointerLeave={() => setHovering(null)}
+              />
+            </Reveal>
+          )}
+          {projects[2] && (
+            <Reveal
+              className="lg:col-span-6 lg:col-start-4 lg:row-start-2 lg:mt-12"
+              delay={360}
+            >
+              <WorkCard
+                project={projects[2]}
+                mode={
+                  hovering === null
+                    ? "default"
+                    : hovering === projects[2].id
+                    ? "active"
+                    : "inactive"
+                }
+                onPointerEnter={() => setHovering(projects[2]!.id)}
                 onPointerLeave={() => setHovering(null)}
               />
             </Reveal>

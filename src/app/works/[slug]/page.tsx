@@ -4,6 +4,7 @@ import ProjectHero from "@/components/ProjectHero";
 import WorkGallery from "@/components/WorkGallery";
 import Footer from "@/components/Footer";
 import NextProjectLink from "@/components/NextProjectLink";
+import ProjectNotice from "@/components/ProjectNotice";
 import ScrollProgress from "@/components/ScrollProgress";
 import { workDetails, getWorkBySlug } from "@/data/workDetails";
 import { getLocalizedWorkPair } from "@/data/workDetailsJp";
@@ -43,6 +44,8 @@ export default async function WorkDetailPage({
   return (
     <div className="min-h-screen bg-ink">
       <Header />
+      {/* CULMINATION 专属:进入页面时浮现的公司通告弹窗 */}
+      {slug === "culmination" && <ProjectNotice />}
       {/* 顶部品牌红滚动进度条 —— 长 gallery 时方便看读到哪 */}
       <ScrollProgress />
       {/* page-in:进入详情页时整页 ~420ms 淡入,衔接首页 → 详情页节奏 */}

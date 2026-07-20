@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import SmartImage from "./SmartImage";
+import { useEffect, useRef, useState } from "react";
 import type { WorkSection } from "@/data/workDetails";
 import type { Lang } from "@/data/i18n";
 import { useLang } from "./LangProvider";
 
 /**
- * 详情页画廊:左侧按 section 分组的缩略图,右侧大图 + 说明。
+ * 详情页画廊 —— 垂直阅读流 + 收起式悬浮导览。
  *
- * 索引模型:section 是渲染分组,大图切换走 *全局 flat index*。
- * 所有 section 的图按顺序展开后,缩略图 01..N 对应全局 index 0..N-1。
- * 上下张按钮在全局数组里循环。
+ * 阅读主体:桌面与移动共用同一条纵向流。每张图 = 一张卡片
+ * (编号 / 图 / 标题 / 描述 / Stage·Tools),图片紧挨自己的说明,
+ * 一路往下滚即可读完,不再需要常驻的缩略图总览栏。
  *
- * 接收双语 sections:{ en, jp }。两套数组顺序、长度、src 严格对齐
- * (由 workDetailsJp.ts 保证),所以 index 在两种语言下都指向同一张图。
+ * 导览栏(仅 lg+):默认收起为屏幕左缘的一枚竖标签;鼠标移到标签上
+ * 展开为悬浮面板,列出全部缩略图,点击平滑滚动到对应位置。
+ * 当前阅读到第几张由 IntersectionObserver 追踪并在面板里高亮。
+ *
+ * 键盘 ← / → 在图片之间跳转(滚动),与导览面板共用同一套索引。
+ *
+ * 接收三语 sections:Record<Lang, WorkSection[]>。三套数组顺序、长度、
+ * src 严格对齐,所以 index 在任何语言下都指向同一张图。
  */
 export default function WorkGallery({
   sections,
@@ -24,45 +29,89 @@ export default function WorkGallery({
   const { lang, t } = useLang();
   const activeSections = sections[lang];
 
-  // 拆分:有图的 section 进缩略图/Viewer 画廊;带 video 的 section 作为
-  // 独立视频块渲染在画廊之后(不参与图片索引流)
+  // 拆分:有图的 section 进阅读流;带 video 的 section(YouTube 嵌入等)
+  // 作为独立展示块渲染在流之后
   const imageSections = activeSections.filter((s) => s.images.length > 0);
   const videoSections = activeSections.filter((s) => s.video);
 
-  // 扁平成全局数组(仅图片 section,基于当前语言;顺序与其他语言一致)
   const allImages = imageSections.flatMap((s) => s.images);
   const total = allImages.length;
 
+  // 当前阅读到的图片索引(由滚动位置驱动,用于导览面板高亮)
   const [index, setIndex] = useState(0);
-  const current = allImages[index];
+  // 导览面板展开状态:hover 边缘标签临时展开;点击标签可固定(pin)住,
+  // 便于连续点选多张 —— 两者任一为真即展开
+  const [navHover, setNavHover] = useState(false);
+  const [navPinned, setNavPinned] = useState(false);
+  const navOpen = navHover || navPinned;
+  // 每张卡片的 DOM 引用 —— 供导览点击 / 键盘跳转时滚动定位
+  const articleRefs = useRef<(HTMLElement | null)[]>([]);
 
-  // 键盘 ← / → 切图;放在任何 early return 之前,保证 hooks 调用顺序在
-  // 每次渲染都一致(rules-of-hooks)。不监听 Esc / Home / End 等。
+  // 滚动追踪:哪张卡片在视口中占比最大,就把它标记为"当前"
+  useEffect(() => {
+    const els = articleRefs.current.filter(Boolean) as HTMLElement[];
+    if (els.length === 0) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        const i = Number((visible.target as HTMLElement).dataset.index);
+        if (!Number.isNaN(i)) setIndex(i);
+      },
+      // 视口中段作为判定带,避免刚露头就被判为"当前"
+      { rootMargin: "-25% 0px -45% 0px", threshold: [0.05, 0.35, 0.7] }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [total, lang]);
+
+  // 平滑滚动到指定图片(顶部留出 header 高度,globals.css 已设 scroll-padding-top)
+  const scrollToImage = (i: number) => {
+    articleRefs.current[i]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  // 键盘 ← / → 跳到上/下一张(循环)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // 忽略输入框聚焦时的按键
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (total === 0) return;
 
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setIndex((i) => ((i - 1) % total + total) % total);
+        setIndex((i) => {
+          const next = (i - 1 + total) % total;
+          articleRefs.current[next]?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+          return next;
+        });
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        setIndex((i) => (i + 1) % total);
+        setIndex((i) => {
+          const next = (i + 1) % total;
+          articleRefs.current[next]?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+          return next;
+        });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [total]);
 
-  if (total === 0 || !current) return null;
+  if (total === 0) return null;
 
-  const goTo = (i: number) => setIndex(((i % total) + total) % total);
-  const prev = () => goTo(index - 1);
-  const next = () => goTo(index + 1);
-  const reset = () => setIndex(0);
-
+  // 给每个 section 计算它在全局扁平数组里的起始下标 → 卡片编号 01..N 连续
   const sectionsWithOffset = imageSections.map((s, i) => ({
     ...s,
     start: imageSections
@@ -71,67 +120,232 @@ export default function WorkGallery({
   }));
 
   return (
-    <section className="bg-ink px-6 pb-24 text-white lg:px-12 lg:pb-32">
-      <div className="mx-auto max-w-[1360px]">
-        {/* 与 Hero 之间的细分割线(桌面 + 移动共用) */}
-        <div className="border-t border-white/10" aria-hidden />
+    <>
+      {/* ═══ 收起式悬浮导览(仅 lg+)═══
+          默认只露出左缘一枚竖标签,hover 展开缩略图面板;
+          点击缩略图平滑滚动到对应卡片,当前阅读项高亮。 */}
+      <div
+        className="fixed left-0 top-1/2 z-40 hidden -translate-y-1/2 lg:block"
+        onPointerEnter={() => setNavHover(true)}
+        onPointerLeave={() => setNavHover(false)}
+      >
+        <div className="flex items-center">
+          {/* 折叠标签 —— 竖排文字 + 当前进度;点击可固定展开 */}
+          <button
+            type="button"
+            onClick={() => setNavPinned((p) => !p)}
+            aria-expanded={navOpen}
+            aria-label={t.workDetail.index}
+            className={`flex cursor-pointer flex-col items-center gap-3 rounded-r border-y border-r bg-ink/95 py-5 pl-2 pr-2.5 backdrop-blur transition-colors ${
+              navPinned
+                ? "border-brand"
+                : navOpen
+                ? "border-brand/40"
+                : "border-white/15 hover:border-white/30"
+            }`}
+          >
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70"
+              style={{ writingMode: "vertical-rl" }}
+            >
+              {t.workDetail.index}
+            </span>
+            <span
+              className="block h-6 w-px bg-brand"
+              aria-hidden
+            />
+            <span className="font-mono text-[10px] font-bold tabular-nums text-brand">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          </button>
 
-        {/* ═══ 桌面 lg+ ═══ 缩略图 + 大图 Viewer 双栏布局(原结构) */}
-        <div className="mt-12 hidden gap-10 lg:grid lg:grid-cols-12 lg:gap-12">
-          {/* ─── 左:缩略图(按 section 分组,组上方有小标题) ─── */}
-          <div className="lg:col-span-6">
-            {sectionsWithOffset.map((section, sIdx) => (
-              <div
-                key={section.label}
-                className={sIdx === 0 ? "" : "mt-10"}
-              >
-                {/* Section 小标题 —— 与全站 eyebrow 风格一致 */}
-                <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
+          {/* 展开面板 —— 宽度 / 透明度过渡,收起时不占位也不可点 */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-out ${
+              navOpen
+                ? "max-w-[320px] opacity-100"
+                : "pointer-events-none max-w-0 opacity-0"
+            }`}
+          >
+            <div className="ml-1 max-h-[70vh] w-[300px] overflow-y-auto rounded border border-white/15 bg-ink/95 p-3 backdrop-blur">
+              {sectionsWithOffset.map((section, sIdx) => (
+                <div key={section.label} className={sIdx === 0 ? "" : "mt-4"}>
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/85">
+                    <span
+                      className="mr-2 inline-block h-px w-4 bg-brand align-middle"
+                      aria-hidden
+                    />
+                    {section.label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {section.images.map((img, localI) => {
+                      const i = section.start + localI;
+                      const active = i === index;
+                      const number = String(i + 1).padStart(2, "0");
+                      return (
+                        <button
+                          key={`${img.src}-${i}`}
+                          type="button"
+                          onClick={() => scrollToImage(i)}
+                          className={`relative aspect-video overflow-hidden rounded-sm text-left transition-opacity ${
+                            active
+                              ? "ring-2 ring-brand"
+                              : "opacity-70 hover:opacity-100"
+                          }`}
+                          aria-label={`${number}: ${img.title}`}
+                          aria-current={active}
+                        >
+                          {img.isVideo ? (
+                            <>
+                              <video
+                                src={img.src}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                              <span
+                                aria-hidden
+                                className="absolute inset-0 flex items-center justify-center"
+                              >
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/60">
+                                  <svg width="7" height="8" viewBox="0 0 10 12" fill="none">
+                                    <path d="M0 0l10 6-10 6z" fill="#fff" />
+                                  </svg>
+                                </span>
+                              </span>
+                            </>
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={img.src}
+                              alt={img.title}
+                              loading="lazy"
+                              decoding="async"
+                              className={`absolute inset-0 h-full w-full ${
+                                img.orientation === "portrait"
+                                  ? "object-contain"
+                                  : "object-cover"
+                              }`}
+                            />
+                          )}
+                          <span
+                            className={`absolute left-1 top-1 rounded-full px-1.5 text-[9px] font-bold leading-[1.5] tracking-wider ${
+                              active
+                                ? "bg-brand text-white"
+                                : "bg-black/70 text-white/90"
+                            }`}
+                          >
+                            {number}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="bg-ink px-6 pb-24 text-white lg:px-12 lg:pb-32">
+        <div className="mx-auto max-w-[1360px]">
+          {/* 与 Hero 之间的细分割线 */}
+          <div className="border-t border-white/10" aria-hidden />
+
+          {/* ═══ 垂直阅读流(桌面 + 移动共用)═══
+              阅读区收窄到 1080px,长图不至于铺满整屏影响阅读节奏 */}
+          <div className="mx-auto mt-12 max-w-[1080px] space-y-16 lg:mt-16 lg:space-y-24">
+            {sectionsWithOffset.map((section) => (
+              <div key={section.label}>
+                {/* Section 标题 —— 分区现在是具名地点(如"旧慈悲修道院"),
+                    字号从 10px 提到 15/17px 并加粗,作为阅读流的分章标题 */}
+                <p className="mb-6 text-[15px] font-bold uppercase tracking-[0.22em] text-white lg:mb-8 lg:text-[17px]">
                   <span
-                    className="mr-3 inline-block h-px w-6 bg-brand align-middle"
+                    className="mr-3 inline-block h-[2px] w-8 bg-brand align-middle"
                     aria-hidden
                   />
                   {section.label}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="space-y-12 lg:space-y-20">
                   {section.images.map((img, localI) => {
                     const i = section.start + localI;
-                    const active = i === index;
                     const number = String(i + 1).padStart(2, "0");
-                    const fit =
-                      img.orientation === "portrait"
-                        ? "object-contain"
-                        : "object-cover";
                     return (
-                      <button
+                      <article
                         key={`${img.src}-${i}`}
-                        type="button"
-                        onClick={() => setIndex(i)}
-                        className={`relative aspect-video overflow-hidden text-left transition-opacity ${
-                          active
-                            ? "ring-2 ring-brand ring-offset-0"
-                            : "opacity-80 hover:opacity-100"
-                        }`}
-                        aria-label={`Show image ${number}: ${img.title}`}
-                        aria-pressed={active}
+                        ref={(el) => {
+                          articleRefs.current[i] = el;
+                        }}
+                        data-index={i}
+                        className="scroll-mt-24"
                       >
-                        <SmartImage
-                          src={img.src}
-                          alt={img.title}
-                          className={`absolute inset-0 h-full w-full ${fit}`}
-                          fallbackLabel={number}
-                        />
-                        <span
-                          className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold leading-tight tracking-wider ${
-                            active
-                              ? "bg-brand text-white"
-                              : "bg-black/70 text-white/90"
-                          }`}
-                        >
-                          {number}
-                        </span>
-                      </button>
+                        {/* 图片 / 视频 —— w-full 保持原比例不变形 */}
+                        {img.isVideo ? (
+                          <video
+                            src={img.src}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="block h-auto w-full bg-white/[0.04]"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={img.src}
+                            alt={img.title}
+                            loading="lazy"
+                            decoding="async"
+                            // 竖构图(海报拼图、立绘等)按视口高度收进一屏并居中,
+                            // 否则满宽渲染会高过一屏、需要滚动才能看全;
+                            // 横构图仍然满宽铺满阅读区
+                            className={`block bg-white/[0.04] ${
+                              img.orientation === "portrait"
+                                ? "mx-auto h-auto max-h-[78vh] w-auto max-w-full"
+                                : "h-auto w-full"
+                            }`}
+                          />
+                        )}
+
+                        {/* 说明区 —— 桌面左右分栏(标题+描述 / Stage·Tools),
+                            移动端自然上下堆叠 */}
+                        <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 lg:mt-6 lg:grid-cols-12 lg:gap-8 lg:pt-6">
+                          <div className="lg:col-span-8">
+                            <div className="flex items-baseline gap-3">
+                              <span className="font-mono text-[11px] font-bold tabular-nums tracking-wider text-brand">
+                                {number}
+                              </span>
+                              <h3 className="text-[17px] font-bold leading-snug lg:text-[20px]">
+                                {img.title}
+                              </h3>
+                            </div>
+                            <p className="mt-2.5 text-[14px] leading-relaxed text-white/80 lg:text-[15px]">
+                              {img.description}
+                            </p>
+                          </div>
+
+                          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 lg:col-span-4 lg:grid-cols-1">
+                            <div>
+                              <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                                {t.workDetail.stage}
+                              </dt>
+                              <dd className="mt-1.5 text-[12px] text-white/85 lg:text-[13px]">
+                                {img.stage}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                                {t.workDetail.tools}
+                              </dt>
+                              <dd className="mt-1.5 text-[12px] text-white/85 lg:text-[13px]">
+                                {img.tools.join(" / ")}
+                              </dd>
+                            </div>
+                          </dl>
+                        </div>
+                      </article>
                     );
                   })}
                 </div>
@@ -139,284 +353,101 @@ export default function WorkGallery({
             ))}
           </div>
 
-          {/* ─── 右:大图查看 + 说明 ──────────────────────── */}
-          <div className="lg:col-span-6">
-            <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
-              {/* key={current.src} 让 <img> 每次切图都重挂 → image-fade-in
-                  动画自然触发,产生 ~320ms 淡入,不会硬切 */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={current.src}
-                src={current.src}
-                alt={current.title}
-                className="image-fade-in absolute inset-0 h-full w-full object-contain"
-              />
-
-              {/* 右上 X:回到默认状态(第 1 张) */}
-              <button
-                type="button"
-                onClick={reset}
-                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white/80 transition-colors hover:border-brand hover:text-brand"
-                aria-label="Reset to first image"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path
-                    d="M1 1l12 12M13 1L1 13"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
+          {/* ═══ 视频展示块(GAMEPLAY SYSTEM DEMO 等)═══
+              带 video 字段的 section 独立渲染在阅读流之后。
+              桌面:视频左 7 列 + 说明右 5 列;移动:上下堆叠。 */}
+          {videoSections.map((section) => {
+            const v = section.video;
+            if (!v) return null;
+            return (
+              <div key={section.label} className="mx-auto mt-16 max-w-[1080px] lg:mt-24">
+                <p className="mb-6 text-[15px] font-bold uppercase tracking-[0.22em] text-white lg:mb-8 lg:text-[17px]">
+                  <span
+                    className="mr-3 inline-block h-[2px] w-8 bg-brand align-middle"
+                    aria-hidden
                   />
-                </svg>
-              </button>
+                  {section.label}
+                </p>
 
-              {/* 右下:序号 + 上下箭头 */}
-              <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded bg-black/40 px-3 py-2 backdrop-blur">
-                <span className="text-xs tabular-nums text-white/80">
-                  {index + 1} / {total}
-                </span>
-                <button
-                  type="button"
-                  onClick={prev}
-                  className="flex h-7 w-7 items-center justify-center border border-white/20 text-white/80 transition-colors hover:border-brand hover:text-brand"
-                  aria-label="Previous image"
-                >
-                  <svg
-                    width="12"
-                    height="10"
-                    viewBox="0 0 12 10"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M5 1L1 5l4 4M1 5h11"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={next}
-                  className="flex h-7 w-7 items-center justify-center border border-white/20 text-white/80 transition-colors hover:border-brand hover:text-brand"
-                  aria-label="Next image"
-                >
-                  <svg
-                    width="12"
-                    height="10"
-                    viewBox="0 0 12 10"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M7 1l4 4-4 4M11 5H0"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* 说明区 —— key 让文字也跟着大图一起淡入,节奏统一 */}
-            <div key={current.src} className="image-fade-in mt-6">
-              <h3 className="text-xl font-bold">{current.title}</h3>
-
-              <div className="mt-4 border-l border-white/15 pl-5">
-                <dl className="space-y-4">
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      {t.workDetail.description}
-                    </dt>
-                    <dd className="mt-2 text-sm leading-relaxed text-white/80">
-                      {current.description}
-                    </dd>
+                <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+                  <div className="lg:col-span-7">
+                    <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
+                      {v.localSrc ? (
+                        <video
+                          src={v.localSrc}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="absolute inset-0 h-full w-full object-contain"
+                        />
+                      ) : (
+                        <iframe
+                          src={v.embedUrl}
+                          title={v.title}
+                          className="absolute inset-0 h-full w-full"
+                          loading="lazy"
+                          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      {t.workDetail.stage}
-                    </dt>
-                    <dd className="mt-2 text-sm">{current.stage}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      {t.workDetail.tools}
-                    </dt>
-                    <dd className="mt-2 text-sm">
-                      {current.tools.join(" / ")}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* ═══ 移动 < lg ═══ 垂直图文卡片流
-            每张图 = 一张独立卡片:编号 / 大图 / 标题 / 描述 / Stage·Tools 行
-            图片紧挨自己的说明,用户滑到哪张就看到哪张的说明,不需要先翻完所有缩略图
-            竖图 / 横图都用 w-full h-auto 自然显示,不裁切、不变形 */}
-        <div className="mt-10 space-y-14 lg:hidden">
-          {sectionsWithOffset.map((section) => (
-            <div key={section.label}>
-              {/* Section 小标题(与桌面 eyebrow 风格一致) */}
-              <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
-                <span
-                  className="mr-3 inline-block h-px w-6 bg-brand align-middle"
-                  aria-hidden
-                />
-                {section.label}
-              </p>
-
-              <div className="space-y-12">
-                {section.images.map((img, localI) => {
-                  const i = section.start + localI;
-                  const number = String(i + 1).padStart(2, "0");
-                  return (
-                    <article key={`${img.src}-${i}`} className="space-y-4">
-                      {/* 小编号 —— 红色 / 等宽数字 */}
-                      <span className="block font-mono text-[11px] font-bold tabular-nums tracking-wider text-brand">
-                        {number}
-                      </span>
-
-                      {/* 图片 —— 横竖都用 w-full h-auto,保持原比例不变形
-                          loading lazy / decoding async:移动端节省流量与渲染 */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.src}
-                        alt={img.title}
-                        loading="lazy"
-                        decoding="async"
-                        className="block h-auto w-full bg-white/[0.04]"
-                      />
-
-                      {/* 标题 + 描述紧挨图片 */}
-                      <h3 className="text-[17px] font-bold leading-snug">
-                        {img.title}
-                      </h3>
-                      <p className="text-[14px] leading-relaxed text-white/80">
-                        {img.description}
-                      </p>
-
-                      {/* Stage / Tools 小信息行 —— 两列紧凑,不抢主内容 */}
-                      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/10 pt-4">
+                  <div className="lg:col-span-5">
+                    <h3 className="text-xl font-bold">{v.title}</h3>
+                    <div className="mt-4 border-l border-white/15 pl-5">
+                      <dl className="space-y-4">
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                            {t.workDetail.description}
+                          </dt>
+                          <dd className="mt-2 text-sm leading-relaxed text-white/80">
+                            {v.description}
+                          </dd>
+                        </div>
                         <div>
                           <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
                             {t.workDetail.stage}
                           </dt>
-                          <dd className="mt-1.5 text-[12px] text-white/85">
-                            {img.stage}
-                          </dd>
+                          <dd className="mt-2 text-sm">{v.stage}</dd>
                         </div>
                         <div>
                           <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
                             {t.workDetail.tools}
                           </dt>
-                          <dd className="mt-1.5 text-[12px] text-white/85">
-                            {img.tools.join(" / ")}
+                          <dd className="mt-2 text-sm">{v.tools.join(" / ")}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                            {t.workDetail.content}
+                          </dt>
+                          <dd className="mt-2">
+                            <ul className="space-y-1.5">
+                              {v.content.map((c) => (
+                                <li
+                                  key={c}
+                                  className="flex items-start gap-2 text-sm text-white/80"
+                                >
+                                  <span
+                                    className="mt-[7px] inline-block h-1 w-1 flex-shrink-0 bg-brand"
+                                    aria-hidden
+                                  />
+                                  {c}
+                                </li>
+                              ))}
+                            </ul>
                           </dd>
                         </div>
                       </dl>
-                    </article>
-                  );
-                })}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-
-        {/* ═══ 视频展示块(GAMEPLAY SYSTEM DEMO 等)═══
-            带 video 的 section 独立渲染,不进缩略图 / Viewer 流。
-            桌面:视频左 7 列 + 说明右 5 列;移动:视频在上、说明在下,均 100% 宽。
-            iframe 保持 16:9(aspect-video),无 autoplay。 */}
-        {videoSections.map((section) => {
-          const v = section.video;
-          if (!v) return null;
-          return (
-            <div key={section.label} className="mt-16 lg:mt-20">
-              {/* Section 标题 —— 与 DEVICE / WALL DESIGN 完全一致的样式 */}
-              <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
-                <span
-                  className="mr-3 inline-block h-px w-6 bg-brand align-middle"
-                  aria-hidden
-                />
-                {section.label}
-              </p>
-
-              <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
-                {/* 视频:16:9 响应式 iframe */}
-                <div className="lg:col-span-7">
-                  <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
-                    <iframe
-                      src={v.embedUrl}
-                      title={v.title}
-                      className="absolute inset-0 h-full w-full"
-                      loading="lazy"
-                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-
-                {/* 说明块 —— 复用图片说明区样式(标题 + 左红边 dl) */}
-                <div className="lg:col-span-5">
-                  <h3 className="text-xl font-bold">{v.title}</h3>
-                  <div className="mt-4 border-l border-white/15 pl-5">
-                    <dl className="space-y-4">
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                          {t.workDetail.description}
-                        </dt>
-                        <dd className="mt-2 text-sm leading-relaxed text-white/80">
-                          {v.description}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                          {t.workDetail.stage}
-                        </dt>
-                        <dd className="mt-2 text-sm">{v.stage}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                          {t.workDetail.tools}
-                        </dt>
-                        <dd className="mt-2 text-sm">{v.tools.join(" / ")}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                          {t.workDetail.content}
-                        </dt>
-                        <dd className="mt-2">
-                          <ul className="space-y-1.5">
-                            {v.content.map((c) => (
-                              <li
-                                key={c}
-                                className="flex items-start gap-2 text-sm text-white/80"
-                              >
-                                <span
-                                  className="mt-[7px] inline-block h-1 w-1 flex-shrink-0 bg-brand"
-                                  aria-hidden
-                                />
-                                {c}
-                              </li>
-                            ))}
-                          </ul>
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
