@@ -7,7 +7,7 @@ import { useLang } from "./LangProvider";
 import Reveal from "./Reveal";
 
 /**
- * Featured Works:黑底 + 极淡视频氛围背景 + 两个项目"协调式 hover"。
+ * Featured Works:黑底 + 极淡视频氛围背景 + 项目卡片"协调式 hover"(2 × 2 错位网格)。
  *
  * 默认状态:NIO / VARIANT 同行并排,VARIANT 静态下移 lg:mt-6(24px)
  *           —— 编辑感的轻微错位,但首屏即可同框看到两个项目
@@ -17,6 +17,14 @@ import Reveal from "./Reveal";
  *           · 全部 transition 420ms ease-out
  * 移动端:transform 都用 lg: 前缀 → 自动跳过互斥效果,两卡同等清晰
  */
+// 每张卡在桌面网格里的位置(Tailwind 需要完整类名,不能动态拼)
+const PLACEMENT = [
+  "lg:col-span-6 lg:col-start-1 lg:row-start-1",
+  "lg:col-span-6 lg:col-start-7 lg:row-start-1 lg:mt-6",
+  "lg:col-span-6 lg:col-start-1 lg:row-start-2 lg:mt-12",
+  "lg:col-span-6 lg:col-start-7 lg:row-start-2 lg:mt-[72px]",
+];
+
 export default function FeaturedWorks() {
   const { t } = useLang();
   // 当前 hover 的项目 id,null 表示无 hover(默认状态)
@@ -65,70 +73,29 @@ export default function FeaturedWorks() {
         </Reveal>
 
         {/*
-          桌面(lg+)── 12 列网格:
+          桌面(lg+)── 12 列网格,2 × 2 编辑式错位:
             · 第一行:项目 1(col 1-6)+ 项目 2(col 7-12 + mt-6 轻微错位)
-            · 第二行:项目 3 居中(col 4-9),与上一行留 mt-12
+            · 第二行:项目 3(col 1-6, mt-12)+ 项目 4(col 7-12, mt-[72px]),延续同样的错位节奏
           hover 协调:进入哪张 → 那张 active,其余全部 inactive。
           移动 ── 单列堆叠,无偏移,无 hover transform
         */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-10 lg:gap-y-0">
-          {projects[0] && (
-            <Reveal
-              className="lg:col-span-6 lg:col-start-1 lg:row-start-1"
-              delay={80}
-            >
+          {projects.map((project, i) => (
+            <Reveal key={project.id} className={PLACEMENT[i] ?? PLACEMENT[PLACEMENT.length - 1]} delay={80 + i * 140}>
               <WorkCard
-                project={projects[0]}
+                project={project}
                 mode={
                   hovering === null
                     ? "default"
-                    : hovering === projects[0].id
+                    : hovering === project.id
                     ? "active"
                     : "inactive"
                 }
-                onPointerEnter={() => setHovering(projects[0]!.id)}
+                onPointerEnter={() => setHovering(project.id)}
                 onPointerLeave={() => setHovering(null)}
               />
             </Reveal>
-          )}
-          {projects[1] && (
-            <Reveal
-              className="lg:col-span-6 lg:col-start-7 lg:row-start-1 lg:mt-6"
-              delay={220}
-            >
-              <WorkCard
-                project={projects[1]}
-                mode={
-                  hovering === null
-                    ? "default"
-                    : hovering === projects[1].id
-                    ? "active"
-                    : "inactive"
-                }
-                onPointerEnter={() => setHovering(projects[1]!.id)}
-                onPointerLeave={() => setHovering(null)}
-              />
-            </Reveal>
-          )}
-          {projects[2] && (
-            <Reveal
-              className="lg:col-span-6 lg:col-start-4 lg:row-start-2 lg:mt-12"
-              delay={360}
-            >
-              <WorkCard
-                project={projects[2]}
-                mode={
-                  hovering === null
-                    ? "default"
-                    : hovering === projects[2].id
-                    ? "active"
-                    : "inactive"
-                }
-                onPointerEnter={() => setHovering(projects[2]!.id)}
-                onPointerLeave={() => setHovering(null)}
-              />
-            </Reveal>
-          )}
+          ))}
         </div>
       </div>
     </section>
