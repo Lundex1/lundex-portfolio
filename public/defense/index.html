@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ゲームのための環境デザイン — LUNDEX</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+body{font-family:Inter,"Yu Gothic","Hiragino Sans","Microsoft YaHei",sans-serif;color:#ececec;user-select:none;-webkit-user-select:none}
+body.idle,body.idle *{cursor:none!important}
+video,canvas{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+canvas{pointer-events:none;opacity:0}
+#black{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .4s ease}
+#hint{position:fixed;right:28px;bottom:22px;font:500 14px/1 ui-monospace,Consolas,monospace;letter-spacing:.12em;color:#e8f03c;
+  background:rgba(0,0,0,.55);padding:8px 12px;border-radius:4px;opacity:0;transition:opacity .3s ease;pointer-events:none}
+#gate{position:fixed;inset:0;background:#0b0b0c;display:flex;flex-direction:column;justify-content:center;padding:0 10vw;gap:22px;transition:opacity .7s ease}
+#gate.gone{opacity:0;pointer-events:none}
+#gate .eyebrow{font:600 12px/1 ui-monospace,Consolas,monospace;letter-spacing:.35em;color:#8a8a8a}
+#gate .eyebrow b{display:inline-block;width:32px;height:2px;background:#e8f03c;vertical-align:middle;margin-right:14px}
+#gate h1{margin:0;font-weight:800;font-size:clamp(34px,5vw,72px);letter-spacing:-.01em;line-height:1.1}
+#gate h1 span{color:#e8f03c}
+#gate .sub{color:#9a9a9a;font-size:clamp(14px,1.3vw,18px)}
+#bar{width:min(520px,80vw);height:2px;background:#2a2a2a;position:relative;overflow:hidden}
+#bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:#e8f03c;transition:width .2s linear}
+#status{font:500 13px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.12em;color:#9a9a9a}
+#start{align-self:flex-start;font:700 15px/1 Inter,sans-serif;letter-spacing:.2em;color:#0b0b0c;background:#e8f03c;border:0;padding:16px 26px;
+  cursor:pointer;opacity:.25;pointer-events:none;transition:opacity .4s ease,transform .2s ease}
+#start.on{opacity:1;pointer-events:auto}#start.on:hover{transform:translateX(6px)}
+#keys{font:12px/1.9 ui-monospace,Consolas,monospace;color:#6f6f6f;letter-spacing:.06em}
+#keys b{color:#bdbdbd;font-weight:600}
+#back{position:fixed;left:28px;top:24px;font:700 13px/1 Inter,sans-serif;letter-spacing:.3em;color:#bdbdbd;text-decoration:none}
+#back:before{content:"";display:inline-block;width:4px;height:16px;background:#e33;margin-right:10px;vertical-align:-3px}
+</style>
+</head>
+<body>
+<video id="v" playsinline preload="auto"></video>
+<canvas id="cv"></canvas>
+<div id="black"></div>
+<div id="hint"></div>
+<div id="gate">
+  <a id="back" href="/">LUNDEX</a>
+  <div class="eyebrow"><b></b>GRADUATION PROJECT 2026 ／ 前期発表</div>
+  <h1>ゲームのための<br><span>環境デザイン</span></h1>
+  <div class="sub">Environment Design for Games — interactive presentation</div>
+  <div id="bar"><i></i></div>
+  <div id="status">LOADING…</div>
+  <button id="start">START ▸</button>
+  <div id="keys"><b>クリック / → / Space</b> 次へ　<b>右クリック / ←</b> 戻る　<b>数字 + Enter</b> ページへ　<b>F</b> 全画面　<b>B</b> 黒画面　<b>M</b> 消音　<b>+ / −</b> 音量</div>
+</div>
+<script>
+const P = [5.2667,7.6000,10.2667,13.2667,15.6000,17.7667,19.9333,22.6000,25.9333,27.7667,29.4333,31.2667,34.1000,36.1000,39.6333,41.3000,43.4667,45.9667,48.1333,49.9667,52.1333,54.4667,56.4667,58.8000,61.1333,65.0000,67.1667,69.3333,72.1667,76.2000,79.0333,80.7000,83.5333,86.3667,89.2000,92.7000,96.7333,100.2333,103.2333];
+const PAGE_END = {"1":2,"2":4,"3":7,"4":14,"5":17,"6":21,"7":25,"8":29,"9":30,"10":32,"11":33,"12":34,"13":36,"14":39};
+const SRC = "/defense/defense.mp4"; // absolute: the page is served at /defense (no trailing slash)
+const v = document.getElementById("v"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const gate = document.getElementById("gate"), bar = document.querySelector("#bar i"), status = document.getElementById("status"), startBtn = document.getElementById("start");
+const blackEl = document.getElementById("black"), hint = document.getElementById("hint");
+let current = 0, target = null, digits = "", base = 1, muted = false, black = false, started = false, ready = false;
+let quietUntil = 0; // ignore stray input right after the page becomes ready / the talk starts (as in the exe player)
+const timeOf = (i) => (i === 0 ? 0 : P[i - 1]);
+const FADE = 0.25; // sound fades out over the last 0.25 s before each stop (as in the exe player)
+
+// ---- load the whole video into memory first, so nothing can stall during the talk ----
+(async () => {
+  try {
+    const res = await fetch(SRC);
+    if (!res.ok || !res.body) throw new Error(res.status);
+    const total = +res.headers.get("content-length") || 0, reader = res.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value); got += value.length;
+      if (total) { bar.style.width = (got / total * 100).toFixed(1) + "%"; status.textContent = "LOADING " + Math.floor(got / total * 100) + "%  ·  " + (got / 1e6).toFixed(0) + " / " + (total / 1e6).toFixed(0) + " MB"; }
+    }
+    v.src = URL.createObjectURL(new Blob(parts, { type: "video/mp4" }));
+  } catch (e) {
+    v.src = SRC; // streaming fallback
+  }
+  v.addEventListener("loadeddata", () => {
+    ready = true; quietUntil = performance.now() + 1000; bar.style.width = "100%"; status.textContent = "READY"; startBtn.classList.add("on"); startBtn.focus();
+  }, { once: true });
+  v.load();
+})();
+
+function start() {
+  if (!ready || started || performance.now() < quietUntil) return;
+  started = true; quietUntil = performance.now() + 400;
+  gate.classList.add("gone");
+  v.currentTime = 0; v.pause();
+  enterFullscreen();
+  try { navigator.wakeLock && navigator.wakeLock.request("screen"); } catch (e) {}
+}
+startBtn.addEventListener("click", (e) => { e.stopPropagation(); start(); });
+
+// ---- steps ----
+function applyVolume(k) { v.volume = muted ? 0 : Math.max(0, Math.min(1, base * k)); }
+function snapshot() {
+  if (!v.videoWidth) return false;
+  cv.width = v.videoWidth; cv.height = v.videoHeight;
+  ctx.drawImage(v, 0, 0, cv.width, cv.height);
+  cv.style.transition = "none"; cv.style.opacity = "1";
+  return true;
+}
+function dissolve() {
+  requestAnimationFrame(() => requestAnimationFrame(() => { cv.style.transition = "opacity .5s cubic-bezier(.4,0,.2,1)"; cv.style.opacity = "0"; }));
+}
+function hold(i, soft) {
+  target = null; current = i;
+  const had = soft && snapshot();
+  v.pause();
+  if (had) v.addEventListener("seeked", dissolve, { once: true });
+  v.currentTime = timeOf(i);
+}
+function next() {
+  if (!started) return start();
+  digits = "";
+  if (target !== null) return hold(target, true); // clicked during an animation: go to its end
+  if (current >= P.length) return;
+  target = current + 1;
+  applyVolume(1);
+  v.play();
+}
+function prev() {
+  if (!started) return;
+  digits = "";
+  hold(Math.max(0, (target !== null ? target : current) - 1), true);
+}
+function jump(page) {
+  const i = page === 0 ? 0 : PAGE_END[page];
+  if (i === undefined) return flash("NO PAGE " + page);
+  hold(i, true);
+}
+(function tick() {
+  if (target !== null && !v.paused) {
+    const left = timeOf(target) - v.currentTime;
+    applyVolume(Math.min(1, left / FADE));
+    if (left <= 0.02) hold(target, false);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ---- ui helpers ----
+let hintTimer;
+function flash(text) { hint.textContent = text; hint.style.opacity = 1; clearTimeout(hintTimer); hintTimer = setTimeout(() => (hint.style.opacity = 0), 1400); }
+function toggleBlack() { black = !black; blackEl.style.opacity = black ? 1 : 0; }
+function enterFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {}); }
+function toggleFullscreen() { document.fullscreenElement ? document.exitFullscreen() : enterFullscreen(); }
+
+// ---- input ----
+document.addEventListener("keydown", (e) => {
+  const k = e.key;
+  if (performance.now() < quietUntil) return;
+  if (!started) { if (k === "Enter" || k === " " || k === "ArrowRight" || k === "PageDown") { e.preventDefault(); start(); } return; }
+  if (/^[0-9]$/.test(k)) { digits = (digits + k).slice(-2); flash("P " + digits + "_"); return; }
+  if (k === "Enter" && digits) { const n = parseInt(digits, 10); digits = ""; flash("P " + String(n).padStart(2, "0")); jump(n); return; }
+  if (black && !["b", "B", "."].includes(k)) { if (!["Shift", "Control", "Alt", "Meta"].includes(k)) toggleBlack(); return; } // any key only lifts the black screen
+  switch (k) {
+    case "ArrowRight": case "ArrowDown": case "PageDown": case " ": case "Enter": case "n": case "N": e.preventDefault(); next(); break;
+    case "ArrowLeft": case "ArrowUp": case "PageUp": case "Backspace": case "p": case "P": e.preventDefault(); prev(); break;
+    case "b": case "B": case ".": toggleBlack(); break;
+    case "f": case "F": case "F5": e.preventDefault(); toggleFullscreen(); break;
+    case "m": case "M": muted = !muted; applyVolume(1); flash(muted ? "MUTE" : "SOUND ON"); break;
+    case "+": case "=": base = Math.min(1, base + 0.1); applyVolume(1); flash("VOL " + Math.round(base * 100) + "%"); break;
+    case "-": case "_": base = Math.max(0, base - 0.1); applyVolume(1); flash("VOL " + Math.round(base * 100) + "%"); break;
+    case "Escape": digits = ""; break;
+  }
+});
+document.addEventListener("click", (e) => { if (!started || e.target.closest("a") || performance.now() < quietUntil) return; if (black) return toggleBlack(); next(); });
+document.addEventListener("contextmenu", (e) => { e.preventDefault(); if (started) { if (black) return toggleBlack(); prev(); } });
+let idleTimer;
+document.addEventListener("mousemove", () => { document.body.classList.remove("idle"); clearTimeout(idleTimer); idleTimer = setTimeout(() => started && document.body.classList.add("idle"), 1500); });
+</script>
+</body>
+</html>

@@ -21,9 +21,26 @@ export type Project = {
   /** 三语标题。WorkCard 根据当前语言取一项。 */
   title: { en: string; jp: string; zh: string };
   category: { en: string; jp: string; zh: string };
+  /** 不走 /works/[id] 详情页时的直达地址(整页跳转,例如 /defense 点击式发表) */
+  href?: string;
 };
 
-export const projects: Project[] = workDetails.map((w) => {
+/**
+ * 没有详情页的额外卡片 —— 点击直接打开独立页面。
+ * 04 = 毕业制作前期发表的点击式演示(public/defense/index.html,由 F:\video 的 build-web-player 生成)。
+ */
+const extraProjects: Project[] = [
+  {
+    id: "defense",
+    number: "04",
+    image: "/defense/cover.jpg",
+    href: "/defense",
+    title: { en: "ENVIRONMENT DESIGN", jp: "ゲームのための環境デザイン", zh: "面向游戏的环境设计" },
+    category: { en: "Graduation Project · Interactive Deck", jp: "卒業制作・インタラクティブ発表", zh: "毕业制作・点击式发表" },
+  },
+];
+
+const detailProjects: Project[] = workDetails.map((w) => {
   const jp = workDetailsJp.find((j) => j.slug === w.slug);
   const zh = workDetailsZh.find((z) => z.slug === w.slug);
   return {
@@ -42,3 +59,5 @@ export const projects: Project[] = workDetails.map((w) => {
     },
   };
 });
+
+export const projects: Project[] = [...detailProjects, ...extraProjects];

@@ -54,14 +54,14 @@ export default function WorkCard({
       ? "lg:translate-y-4 lg:scale-[0.97] lg:opacity-70"
       : "";
 
-  return (
-    <Link
-      href={`/works/${project.id}`}
-      onPointerEnter={onPointerEnter}
-      onPointerLeave={onPointerLeave}
-      style={{ transformOrigin: "center center" }}
-      className={`block transition-all duration-[420ms] ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${modeClass}`}
-    >
+  // 有 href 的卡片(如 04 点击式发表)是独立静态页 → 用普通 <a> 整页跳转,不走客户端路由
+  const linkProps = {
+    onPointerEnter,
+    onPointerLeave,
+    style: { transformOrigin: "center center" },
+    className: `block transition-all duration-[420ms] ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${modeClass}`,
+  };
+  const body = (
       <article className="group">
         {/* 封面图 + 叠层 */}
         <div className="relative aspect-video overflow-hidden bg-white/[0.04]">
@@ -140,6 +140,15 @@ export default function WorkCard({
           </div>
         </div>
       </article>
+  );
+
+  return project.href ? (
+    <a href={project.href} {...linkProps}>
+      {body}
+    </a>
+  ) : (
+    <Link href={`/works/${project.id}`} {...linkProps}>
+      {body}
     </Link>
   );
 }
